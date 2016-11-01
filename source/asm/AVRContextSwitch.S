@@ -22,67 +22,25 @@
 ; r21 - r20 base stack pointer for out
 ; r19 - r18 base stack pointer for in
 swap_context:
-    CLZ
-    CPI r24, 0 ; HELLO
-    BRNE swap_context_cont
-    CLZ
-    CPI r25, 0
-    BREQ store_context_complete
-
-; store general purpose registers
-swap_context_cont:
-; store arg 1, into X
-    MOV XL, r24
-    MOV XH, r25
-
-; 0 is the address of r0
-    LDI ZL, 0
-    LDI ZH, 0
-
-store_loop:
-; move GPR to RAM...
-    LD YL, Z+
-    ST X+, YL
-
-; test if we have reached the top of GPR's
-    CPI ZL, 26
-    BRNE store_loop
-
-    ADIW XL, 6
-
-; preserve status reg and stack pointer
-    IN r17, SR
-    ST X+, r17
-    IN r17, SPLO
-    ST X+, r17
-    IN r17, SPHI
-    ST X+, r17
-
-; we have now preserved all GP regs, move onto stack allocated variables.
-; For this we should look at the stack frame, stored indirectly in Y
-; Indirect X is now at stack_base in our C struct
-; load stack base into indirect Z
-
-store_context_complete:
-; check if null parameter
-    CLZ
-    CPI r20, 0
-    BRNE store_context_cont
-    CLZ
-    CPI r21, 0
-    BREQ store_stack_complete
-
-store_context_cont:
-; load our new fibers stack pointer (args r21, r20)
+    ;NEED TO ADD NULL CHECKS
+; load our old fibers RAM stack pointer (args r21, r20)
     MOV ZL, r20
     MOV ZH, r21
 
 ; pre load our terminating condition into r15, and r16
+store_stack_pointer:
     IN r15, SPLO
     IN r16, SPHI
 
-    LDI YL, lo8(RAMEND)
-    LDI YH, hi8(RAMEND)
+    LD XL, r24
+    LD XH, r25
+
+;STORE SPLO AND HI into OUR TCB
+    ST X+, r15
+    ST X+, r16
+
+    LDI YL, LOW(RAMEND)
+    LDI YH, HIGH(RAMEND)
 
     JMP store_stack_validation
 
@@ -98,68 +56,32 @@ store_stack_validation:
     CP YL, r15
     BRNE store_stack
 
-store_stack_complete:
-; check for a null TCB pointer
-    CLZ
-    CPI R22, 0
-    BRNE restore_context
-    CLZ
-    CPI r23, 0
-    BREQ check_lr
-
-restore_context:
-    MOV XL, r22
-    MOV XH, r23
-    LDI ZL, 0
-    LDI ZH, 0
-
-restore_context_loop:
-; move from RAM to GPR...
-    LD YL, X+
-    ST Z+, YL
-
-; test if we have reached the top of GPR's
-    CPI ZL, 26
-    BRNE restore_context_loop
-
-    ADIW XL, 6
-
-; restore status reg and stack pointer
-    LD r17, X+
-    OUT SR, r17
-    LD r17, X+
-    MOV r15, r17
-    OUT SPLO, r17
-    LD r17, X+
-    MOV r16, r17
-    OUT SPHI, r17
-
-restore_stack_frame:
-; restore our stack frame pointer for local vars
-    ;LD r17, X+
-    ;LDS r15, SPL
-    ;LDS r16, SPH
-    ;MOV YL, r17
-    ;LD r17, X+
-    ;MOV YH, r17
-
-restore_stack_chk:
-; check for null parameter
-    CLZ
-    CPI r19, 0
-    BRNE restore_stack
+restore_stack:
     CLZ
     CPI r18, 0
+    BRNE restore_stack_cont
+    CLZ
+    CPI r19, 0
     BREQ check_lr
 
-restore_stack:
+restore_stack_pointer:
+;NEED TO ADD NULL CHECKS
+    LD XL, r22
+    LD XH, r23
 
-; load our new fibers stack pointer (args r19, r18)
+    LD r16, X+
+    LD r17, X+
+
+    OUT SPL, r16
+    OUT SPH, r17
+
+restore_stack_cont:
+; load our new fibers RAM stack pointer (args r19, r18)
     MOV ZL, r18
     MOV ZH, r19
 
-    LDI YL, lo8(RAMEND)
-    LDI YH, hi8(RAMEND)
+    LDI YL, LOW(RAMEND)
+    LDI YH, HIGH(RAMEND)
 
     JMP restore_stack_validation
 
@@ -173,18 +95,13 @@ restore_stack_validation:
     CP ZL, r15
     BRNE restore_stack_loop
 
-    ;MOV YL, r15
-    ;MOV YH, r16
-
 ; check if our faux LR is set, and modify the stack frame return address if required.
 check_lr:
-    LD r17, X+
-    LD r17, X+
 ; low 8 bits, and reset to 0
-    LD r17, X
+    LD r16, X
     ST X+, r1
 ; upper 8 bits, and reset to 0
-    LD r16, X
+    LD r17, X
     ST X+, r1
 
 ; check if we have some semblence of an address in LR...
