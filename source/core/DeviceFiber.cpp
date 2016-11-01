@@ -58,23 +58,21 @@ void delay_ms(uint16_t count)
 
 void print_fiber(Fiber* f)
 {
-    Serial.println("TCB: ");
     Serial.println("______________________");
-    for(int i = 0; i < 32; i++)
+    /*for(int i = 0; i < 32; i++)
     {
         Serial.print(i);
         Serial.print(": ");
         Serial.println(f->tcb.R[i]);
-    }
+    }*/
     Serial.print("SP: ");
     uint16_t stack_pointer = f->tcb.SPHI << 8 | f->tcb.SPLO;
     Serial.println(stack_pointer);
     //Serial.println(f->tcb.SPLO);
-    Serial.print("STBA: ");
-    Serial.println(f->tcb.stack_base);
+    //Serial.print("STBA: ");
+    //Serial.println(f->tcb.stack_base);
     Serial.print("LR: ");
     Serial.println(f->tcb.lr);
-    Serial.println("______________________");
 
     Serial.print("SB: ");
     Serial.println(f->stack_bottom);
@@ -84,8 +82,6 @@ void print_fiber(Fiber* f)
     Serial.println(f->stack_top - f->stack_bottom);
     Serial.print("RE: ");
     Serial.println(RAMEND);
-
-    Serial.println("______________________");
 }
 
 /*
@@ -224,7 +220,8 @@ Fiber *getFiberContext()
     // Ensure this fiber is in suitable state for reuse.
     f->flags = 0;
 
-    f->tcb.stack_base = RAMEND;
+    f->tcb.SPLO = low(RAMEND - 0x02);
+    f->tcb.SPHI = high(RAMEND - 0x02);
 
     return f;
 }
@@ -645,7 +642,7 @@ int invoke(void (*entry_fn)(void *), void *param)
 void launch_new_fiber(void (*ep)(void), void (*cp)(void))
 {
     Serial.println("LAUNCH");
-    while (1);
+    while (!(UCSR0A & _BV(TXC0)));
 
     // Execute the thread's entrypoint
     ep();
@@ -697,11 +694,13 @@ Fiber *__create_fiber(uint32_t ep, uint32_t cp, uint32_t pm, int parameterised)
     // If we're out of memory, there's nothing we can do.
     if (newFiber == NULL)
         return NULL;
-
+    // arg 3
     newFiber->tcb.R20 = low(pm);
     newFiber->tcb.R21 = high(pm);
+    // arg 2
     newFiber->tcb.R22 = low(cp);
     newFiber->tcb.R23 = high(cp);
+    // arg 1
     newFiber->tcb.R24 = low(ep);
     newFiber->tcb.R25 = high(ep);
 
@@ -813,11 +812,14 @@ void verify_stack_size(Fiber *f)
 
     uint16_t stack_pointer = SPH << 8 | SPL;
 
+    Serial.print("launch_n_f: ");
+    Serial.println((int)&launch_new_fiber);
+
     Serial.print("VF SP: ");
     Serial.println(stack_pointer);
 
     // Calculate the stack depth.
-    stackDepth = f->tcb.stack_base - stack_pointer;
+    stackDepth = RAMEND - stack_pointer;
 
     // Calculate the size of our allocated stack buffer
     bufferSize = f->stack_top - f->stack_bottom;
@@ -894,7 +896,8 @@ void schedule()
         forkedFiber->flags |= DEVICE_FIBER_FLAG_CHILD;
 
         // Define the stack base of the forked fiber to be align with the entry point of the parent fiber
-        forkedFiber->tcb.stack_base = currentFiber->tcb.SPHI << 8 | currentFiber->tcb.SPLO;
+        forkedFiber->tcb.SPLO = currentFiber->tcb.SPLO;
+        forkedFiber->tcb.SPHI = currentFiber->tcb.SPHI;
 
         // Ensure the stack allocation of the new fiber is large enough
         verify_stack_size(forkedFiber);
@@ -950,12 +953,10 @@ void schedule()
     // Don't bother with the overhead of switching if there's only one fiber on the runqueue!
     if (currentFiber != oldFiber)
     {
-        Serial.println("SWAP");
         while (!(UCSR0A & _BV(TXC0)));
         // Special case for the idle task, as we don't maintain a stack context (just to save memory).
         if (currentFiber == idleFiber)
         {
-            Serial.println("CONF IDLE");
             idleFiber->tcb.SPHI = high(RAMEND - 0x02);
             idleFiber->tcb.SPLO = low(RAMEND - 0x02);
 
@@ -974,10 +975,12 @@ void schedule()
             // Ensure the stack allocation of the fiber being scheduled out is large enough
             verify_stack_size(oldFiber);
 
-            /*Serial.println("Old Fiber");
+            Serial.println("______________________");
+            Serial.println("Old Fiber");
             print_fiber(oldFiber);
+            Serial.println("______________________");
             Serial.println("New Fiber");
-            print_fiber(currentFiber);*/
+            print_fiber(currentFiber);
 
             Serial.println("SW2");
             while (!(UCSR0A & _BV(TXC0)));
@@ -1062,9 +1065,10 @@ void idle()
   */
 void idle_task()
 {
+    Serial.println("IDLE");
     while(1)
     {
-        Serial.println("TEST");
+
         idle();
         schedule();
     }

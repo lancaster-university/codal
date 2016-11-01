@@ -62,6 +62,13 @@ struct AVR_TCB
     uint8_t SPHI;
 
     uint16_t lr;
+
+    uint8_t R20;
+    uint8_t R21;
+    uint8_t R22;
+    uint8_t R23;
+    uint8_t R24;
+    uint8_t R25;
 };
 
 /**

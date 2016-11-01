@@ -17,30 +17,44 @@
 #define SPHI    62
 #define SR      63
 
-; r25 - 24 TCB paged out
-; r23 - r22 TCB paged in
-; r21 - r20 base stack pointer for out
-; r19 - r18 base stack pointer for in
+;--------------------------
+; save_context
+;
+; Saves the entire stack of the old fiber to RAM, and pages in another fibers
+; stack.
+;
+; ARGS:
+;       * Pointer to the old Fibers' TCB (r24, r25)
+;       * Pointer to the new Fibers' TCB (r22, r23)
+;       * Pointer to the where the old Fibers' stack should be saved (r20, r21)
+;       * Pointer to the where the new Fibers' stack is saved (r18, r19)
+;--------------------------
 swap_context:
-    ;NEED TO ADD NULL CHECKS
+; validation check
+    CPI r20, 0
+    BRNE swap_context_cont
+    CPI r21, 0
+    BREQ restore_stack
+
+swap_context_cont:
 ; load our old fibers RAM stack pointer (args r21, r20)
     MOV ZL, r20
     MOV ZH, r21
+
+    LDI YL, lo8(RAMEND)
+    LDI YH, hi8(RAMEND)
 
 ; pre load our terminating condition into r15, and r16
 store_stack_pointer:
     IN r15, SPLO
     IN r16, SPHI
 
-    LD XL, r24
-    LD XH, r25
+    MOV XL, r24
+    MOV XH, r25
 
 ;STORE SPLO AND HI into OUR TCB
     ST X+, r15
     ST X+, r16
-
-    LDI YL, LOW(RAMEND)
-    LDI YH, HIGH(RAMEND)
 
     JMP store_stack_validation
 
@@ -50,38 +64,39 @@ store_stack:
     ST -Z, r17
 
 store_stack_validation:
-
-    CP YH, r16
-    BRNE store_stack
     CP YL, r15
+    BRNE store_stack
+    CP YH, r16
     BRNE store_stack
 
 restore_stack:
-    CLZ
+; validation check
     CPI r18, 0
-    BRNE restore_stack_cont
-    CLZ
+    BRNE restore_stack_pointer
     CPI r19, 0
     BREQ check_lr
 
 restore_stack_pointer:
 ;NEED TO ADD NULL CHECKS
-    LD XL, r22
-    LD XH, r23
+    MOV XL, r22
+    MOV XH, r23
 
     LD r16, X+
     LD r17, X+
 
-    OUT SPL, r16
-    OUT SPH, r17
+    OUT SPLO, r16
+    OUT SPHI, r17
+
+    MOV r15, r16
+    MOV r16, r17
 
 restore_stack_cont:
 ; load our new fibers RAM stack pointer (args r19, r18)
     MOV ZL, r18
     MOV ZH, r19
 
-    LDI YL, LOW(RAMEND)
-    LDI YH, HIGH(RAMEND)
+    LDI YL, lo8(RAMEND)
+    LDI YH, hi8(RAMEND)
 
     JMP restore_stack_validation
 
@@ -90,13 +105,17 @@ restore_stack_loop:
     ST -Y, r17
 
 restore_stack_validation:
-    CP ZH, r16
+    CP YL, r15
     BRNE restore_stack_loop
-    CP ZL, r15
+    CP YH, r16
     BRNE restore_stack_loop
 
 ; check if our faux LR is set, and modify the stack frame return address if required.
 check_lr:
+    MOV XL, r22
+    MOV XH, r23
+    ADIW XL, 2
+
 ; low 8 bits, and reset to 0
     LD r16, X
     ST X+, r1
@@ -117,157 +136,110 @@ check_lr:
 
 ; modify the return point of our stack frame...
 restore_lr:
-    CLZ
-; first we unset
     IN ZL, SPLO
     IN ZH, SPHI
 
     ADIW ZL, 2
+
     ST Z, r16
     ST -Z, r17
+
+; set our args from the TCB.
+set_args:
+    LD r20, X+
+    LD r21, X+
+    LD r22, X+
+    LD r23, X+
+    LD r24, X+
+    LD r25, X+
 
 restore_stack_complete:
     RET
 
-;--------------------------
-
-modify_ret:
-    LDS ZL, SPL
-    LDS ZH, SPH
-
-    ADIW ZL, 2
-    ST Z, r24
-    ST -Z, r25
-    RET
 
 ;--------------------------
-
-
+; save_context
+;
+; Saves the entire stack, and copies it to RAM.
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;       * Pointer to where the stack should be saved (r22, r23)
+;--------------------------
 save_context:
-    MOV XL, r24
-    MOV XH, r25
-
-    ; 0 is the address of r0
-    LDI ZL, 0
-    LDI ZH, 0
-
-save_context_loop:
-; move GPR to RAM...
-    LD r17, Z+
-    ST X+, r17
-
-; test if we have reached the top of GPR's
-    CPI ZL, 32
-    BRNE save_context_loop
-
-; preserve status reg and stack pointer
-    LDS r17, SREG
-    ST X+, r17
-    LDS r17, SPL
-    ST X+, r17
-    LDS r17, SPH
-    ST X+, r17
-
-; preserve our stack frame pointer, local vars etc.
-    MOV r17, YL
-    ST X+, r17
-    MOV r17, YH
-    ST X+, r17
-
-; SAVE THE STACK FRAME
-; load our old fibers stack pointer (args r23, r22)
+; load our fibers RAM stack pointer (args r22, r23)
     MOV ZL, r22
     MOV ZH, r23
 
+    LDI YL, lo8(RAMEND)
+    LDI YH, hi8(RAMEND)
+
 ; pre load our terminating condition into r15, and r16
-    LDS r15, SPL
-    LDS r16, SPH
+save_stack_pointer:
+    IN r15, SPLO
+    IN r16, SPHI
 
-    LD r17, Y
-    ST Z, r17
-    JMP preserve_stack_validation
+    MOV XL, r24
+    MOV XH, r25
 
-; iterate until the top of the stack == the bottom of the stack.
-preserve_stack:
+;STORE SPLO AND HI into OUR TCB
+    ST X+, r15
+    ST X+, r16
+
+    JMP save_stack_validation
+
+; iterate until Y == SP
+save_stack:
     LD r17, -Y
     ST -Z, r17
 
-preserve_stack_validation:
-    CP YH, r16
-    BRNE preserve_stack
+save_stack_validation:
     CP YL, r15
-    BRNE preserve_stack
+    BRNE save_stack
+    CP YH, r16
+    BRNE save_stack
 
-; finished
     RET
 
-
 ;--------------------------
-
+; save_register_context
+;
+; simply saves the stack pointer in the case of the AVR
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;--------------------------
 save_register_context:
+    IN r15, SPLO
+    IN r16, SPHI
+
     MOV XL, r24
     MOV XH, r25
 
-    ; 0 is the address of r0
-    LDI ZL, 0
-    LDI ZH, 0
-
-save_r_context_loop:
-; move GPR to RAM...
-    LD r17, Z+
-    ST X+, r17
-
-; test if we have reached the top of GPR's
-    CPI ZL, 31
-    BRNE save_r_context_loop
-
-; preserve status reg and stack pointer
-    LDS r17, SREG
-    ST X+, r17
-    LDS r17, SPL
-    ST X+, r17
-    LDS r17, SPH
-    ST X+, r17
-
-; preserve our stack frame pointer, local vars etc.
-    MOV r17, YL
-    ST X+, r17
-    MOV r17, YH
-    ST X+, r17
+;STORE SPLO AND HI into OUR TCB
+    ST X+, r15
+    ST X+, r16
 
 ; finished
     RET
 
 ;--------------------------
-
+; restore_register_context
+;
+; simply restores the stack pointer in the case of the AVR
+;
+; ARGS:
+;       * Pointer to the Fibers' TCB (r24, r25)
+;--------------------------
 restore_register_context:
+;NEED TO ADD NULL CHECKS
     MOV XL, r24
     MOV XH, r25
-    LDI ZL, 0
-    LDI ZH, 0
 
-restore_r_context_loop:
-; move RAM to GPR...
+    LD r16, X+
     LD r17, X+
-    ST Z+, r17
 
-; test if we have reached the top of GPR's
-    CPI ZL, 31
-    BRNE restore_r_context_loop
-
-; restore status reg and stack pointer
-    LD r17, X+
-    STS SREG, r17
-    LD r17, X+
-    STS SPL, r17
-    LD r17, X+
-    STS SPH, r17
-
-; restore our stack frame pointer for local vars
-    LD r17, X+
-    MOV YL, r17
-    LD r17, X+
-    MOV YH, r17
-
+    OUT SPLO, r16
+    OUT SPHI, r17
 ; finished
     RET
