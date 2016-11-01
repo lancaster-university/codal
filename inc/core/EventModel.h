@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef EVENT_MODEL_H
 #define EVENT_MODEL_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 #include "DeviceComponent.h"
 #include "DeviceEvent.h"

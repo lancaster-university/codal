@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DEVICE_FONT_H
 #define DEVICE_FONT_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 
 #define DEVICE_FONT_WIDTH 5

@@ -37,7 +37,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DEVICE_FIBER_H
 #define DEVICE_FIBER_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 #include "DeviceEvent.h"
 #include "EventModel.h"
@@ -57,24 +56,63 @@ DEALINGS IN THE SOFTWARE.
   * This is probably overkill, but the ARMCC compiler uses a lot register optimisation
   * in its calling conventions, so better safe than sorry!
   */
-struct Cortex_M0_TCB
+struct AVR_TCB
 {
-    uint32_t R0;
-    uint32_t R1;
-    uint32_t R2;
-    uint32_t R3;
-    uint32_t R4;
-    uint32_t R5;
-    uint32_t R6;
-    uint32_t R7;
-    uint32_t R8;
-    uint32_t R9;
-    uint32_t R10;
-    uint32_t R11;
-    uint32_t R12;
-    uint32_t SP;
-    uint32_t LR;
-    uint32_t stack_base;
+    uint8_t R[0];
+    uint8_t R0;
+    uint8_t R1;
+    uint8_t R2;
+    uint8_t R3;
+    uint8_t R4;
+    uint8_t R5;
+    uint8_t R6;
+    uint8_t R7;
+    uint8_t R8;
+    uint8_t R9;
+    uint8_t R10;
+    uint8_t R11;
+    uint8_t R12;
+    uint8_t R13;
+    uint8_t R14;
+    uint8_t R15;
+    uint8_t R16;
+    uint8_t R17;
+    uint8_t R18;
+    uint8_t R19;
+    uint8_t R20;
+    uint8_t R21;
+    uint8_t R22;
+    uint8_t R23;
+    uint8_t R24;
+    uint8_t R25;
+
+    // indirect x
+    uint16_t X[0];
+    uint8_t R26;
+    uint8_t R27;
+
+    // indirect y
+    uint16_t Y[0];
+    uint8_t R28;
+    uint8_t R29;
+
+    // indirect z
+    uint16_t Z[0];
+    uint8_t R30;
+    uint8_t R31;
+
+    // status reg
+    uint8_t SR;
+
+    // stack pointer
+    uint16_t SPREG[0];
+    uint8_t SPLO;
+    uint8_t SPHI;
+
+    // stack base
+    uint16_t stack_base;
+
+    uint16_t lr;
 };
 
 /**
@@ -82,9 +120,9 @@ struct Cortex_M0_TCB
   */
 struct Fiber
 {
-    Cortex_M0_TCB tcb;                  // Thread context when last scheduled out.
-    uint32_t stack_bottom;              // The start address of this Fiber's stack. The stack is heap allocated, and full descending.
-    uint32_t stack_top;                 // The end address of this Fiber's stack.
+    AVR_TCB tcb;                  // Thread context when last scheduled out.
+    uint16_t stack_bottom;              // The start address of this Fiber's stack. The stack is heap allocated, and full descending.
+    uint16_t stack_top;                 // The end address of this Fiber's stack.
     uint32_t context;                   // Context specific information.
     uint32_t flags;                     // Information about this fiber.
     Fiber **queue;                      // The queue this fiber is stored on.
@@ -92,7 +130,6 @@ struct Fiber
 };
 
 extern Fiber *currentFiber;
-
 
 /**
   * Initialises the Fiber scheduler.
@@ -180,7 +217,11 @@ Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)
   * The calling Fiber will likely be blocked, and control given to another waiting fiber.
   * Call this function to yield control of the processor when you have nothing more to do.
   */
-void schedule();
+void schedule()
+#ifdef __GCC__
+    __attribute__((naked))
+#endif
+;
 
 /**
   * Blocks the calling thread for the given period of time.
@@ -361,16 +402,16 @@ int fiber_remove_idle_component(DeviceComponent *component);
   */
 inline int inInterruptContext()
 {
-    return (((int)__get_IPSR()) & 0x003F) > 0;
+    return 0;//(((int)__get_IPSR()) & 0x003F) > 0;
 }
 
 /**
   * Assembler Context switch routing.
   * Defined in CortexContextSwitch.s.
   */
-extern "C" void swap_context(Cortex_M0_TCB *from, Cortex_M0_TCB *to, uint32_t from_stack, uint32_t to_stack);
-extern "C" void save_context(Cortex_M0_TCB *tcb, uint32_t stack);
-extern "C" void save_register_context(Cortex_M0_TCB *tcb);
-extern "C" void restore_register_context(Cortex_M0_TCB *tcb);
+extern "C" void swap_context(AVR_TCB *from, AVR_TCB *to, uint16_t from_stack, uint16_t to_stack);
+extern "C" void save_context(AVR_TCB *tcb, uint16_t stack);
+extern "C" void save_register_context(AVR_TCB *tcb);
+extern "C" void restore_register_context(AVR_TCB *tcb);
 
 #endif

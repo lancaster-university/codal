@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef MEMBER_FUNCTION_CALLBACK_H
 #define MEMBER_FUNCTION_CALLBACK_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 #include "DeviceEvent.h"
 #include "DeviceCompat.h"

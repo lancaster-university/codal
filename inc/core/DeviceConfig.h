@@ -30,8 +30,11 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DEVICE_CONFIG_H
 #define DEVICE_CONFIG_H
 
-#include "mbed.h"
 #include "yotta_cfg_mappings.h"
+#include <stdint.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 //
 // Memory configuration
@@ -76,7 +79,7 @@ DEALINGS IN THE SOFTWARE.
 // reserved for SoftDevice is possible, and out of memory condition will no longer be trapped...
 // i.e. panic() will no longer be triggered on memory full conditions.
 #ifndef DEVICE_HEAP_ALLOCATOR
-#define DEVICE_HEAP_ALLOCATOR                 1
+#define DEVICE_HEAP_ALLOCATOR                 0
 #endif
 
 // Block size used by the allocator in bytes.

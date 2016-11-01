@@ -1,0 +1,16 @@
+{
+    "name":"Codal",
+    "description":"codal",
+    "version":"0.0.1",
+    "platforms": "*",
+    "build": {
+        "srcFilter": [
+            "+<source/core/*.cpp>",
+            "+<source/types/DeviceEvent.cpp>",
+            "+<source/asm/AVRContextSwitch.S>",
+            "-<source/core/DeviceSystemTimer.cpp>",
+            "-<source/core/DeviceHeapAllocator.cpp>"
+        ],
+        "flags":"-Iinc/core -Iinc/types -Iinc/platform"
+    }
+}

@@ -38,7 +38,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DEVICE_SYSTEM_TIMER_H
 #define DEVICE_SYSTEM_TIMER_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 #include "DeviceComponent.h"
 

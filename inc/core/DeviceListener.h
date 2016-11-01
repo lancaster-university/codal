@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DEVICE_LISTENER_H
 #define DEVICE_LISTENER_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 #include "DeviceEvent.h"
 #include "MemberFunctionCallback.h"

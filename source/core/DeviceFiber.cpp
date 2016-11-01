@@ -34,6 +34,59 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceConfig.h"
 #include "DeviceFiber.h"
 #include "DeviceSystemTimer.h"
+#include <avr/interrupt.h>
+#include <avr/sleep.h>
+#include <util/delay.h>
+
+#include <Arduino.h>
+
+inline uint8_t high(uint16_t val)
+{
+    return val >> 8;
+}
+
+inline uint8_t low(uint16_t val)
+{
+    return val & 0xFF;
+}
+
+void delay_ms(uint16_t count)
+{
+    while(count--)
+        _delay_ms(1);
+}
+
+void print_fiber(Fiber* f)
+{
+    Serial.println("TCB: ");
+    Serial.println("______________________");
+    for(int i = 0; i < 32; i++)
+    {
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(f->tcb.R[i]);
+    }
+    Serial.print("SP: ");
+    uint16_t stack_pointer = f->tcb.SPHI << 8 | f->tcb.SPLO;
+    Serial.println(stack_pointer);
+    //Serial.println(f->tcb.SPLO);
+    Serial.print("STBA: ");
+    Serial.println(f->tcb.stack_base);
+    Serial.print("LR: ");
+    Serial.println(f->tcb.lr);
+    Serial.println("______________________");
+
+    Serial.print("SB: ");
+    Serial.println(f->stack_bottom);
+    Serial.print("ST: ");
+    Serial.println(f->stack_top);
+    Serial.print("BFS: ");
+    Serial.println(f->stack_top - f->stack_bottom);
+    Serial.print("RE: ");
+    Serial.println(RAMEND);
+
+    Serial.println("______________________");
+}
 
 /*
  * Statically allocated values used to create and destroy Fibers.
@@ -79,7 +132,7 @@ static DeviceComponent* idleThreadComponents[DEVICE_IDLE_COMPONENTS];
   */
 void queue_fiber(Fiber *f, Fiber **queue)
 {
-    __disable_irq();
+    cli();
 
     // Record which queue this fiber is on.
     f->queue = queue;
@@ -106,7 +159,7 @@ void queue_fiber(Fiber *f, Fiber **queue)
         f->next = NULL;
     }
 
-    __enable_irq();
+    sei();
 }
 
 /**
@@ -121,7 +174,7 @@ void dequeue_fiber(Fiber *f)
         return;
 
     // Remove this fiber fromm whichever queue it is on.
-    __disable_irq();
+    cli();
 
     if (f->prev != NULL)
         f->prev->next = f->next;
@@ -135,7 +188,7 @@ void dequeue_fiber(Fiber *f)
     f->prev = NULL;
     f->queue = NULL;
 
-    __enable_irq();
+    sei();
 
 }
 
@@ -146,30 +199,32 @@ Fiber *getFiberContext()
 {
     Fiber *f;
 
-    __disable_irq();
+    cli();
 
     if (fiberPool != NULL)
     {
         f = fiberPool;
         dequeue_fiber(f);
-        // dequeue_fiber() exits with irqs enabled, so no need to do this again!
     }
     else
     {
-        __enable_irq();
-
         f = new Fiber();
 
         if (f == NULL)
             return NULL;
 
+        memset(f, 0, sizeof(Fiber));
+
         f->stack_bottom = 0;
         f->stack_top = 0;
     }
 
+    sei();
+
     // Ensure this fiber is in suitable state for reuse.
     f->flags = 0;
-    f->tcb.stack_base = CORTEX_M0_STACK_BASE;
+
+    f->tcb.stack_base = RAMEND;
 
     return f;
 }
@@ -189,9 +244,9 @@ void scheduler_init(EventModel &_messageBus)
     if (fiber_scheduler_running())
         return;
 
-	// Store a reference to the messageBus provided.
-	// This parameter will be NULL if we're being run without a message bus.
-	messageBus = &_messageBus;
+        // Store a reference to the messageBus provided.
+    // This parameter will be NULL if we're being run without a message bus.
+    messageBus = &_messageBus;
 
     // Create a new fiber context
     currentFiber = getFiberContext();
@@ -202,18 +257,21 @@ void scheduler_init(EventModel &_messageBus)
     // Create the IDLE fiber.
     // Configure the fiber to directly enter the idle task.
     idleFiber = getFiberContext();
-    idleFiber->tcb.SP = CORTEX_M0_STACK_BASE - 0x04;
-    idleFiber->tcb.LR = (uint32_t) &idle_task;
 
-	if (messageBus)
-	{
-		// Register to receive events in the NOTIFY channel - this is used to implement wait-notify semantics
-		messageBus->listen(DEVICE_ID_NOTIFY, DEVICE_EVT_ANY, scheduler_event, MESSAGE_BUS_LISTENER_IMMEDIATE);
-		messageBus->listen(DEVICE_ID_NOTIFY_ONE, DEVICE_EVT_ANY, scheduler_event, MESSAGE_BUS_LISTENER_IMMEDIATE);
-	}
+    idleFiber->tcb.SPHI = high(RAMEND - 0x02);
+    idleFiber->tcb.SPLO = low(RAMEND - 0x02);
 
-	// register a period callback to drive the scheduler and any other registered components.
-    new DeviceSystemTimerCallback(scheduler_tick);
+    idleFiber->tcb.lr = (uint16_t)&idle_task;
+
+    if (messageBus)
+    {
+        // Register to receive events in the NOTIFY channel - this is used to implement wait-notify semantics
+        messageBus->listen(DEVICE_ID_NOTIFY, DEVICE_EVT_ANY, scheduler_event, MESSAGE_BUS_LISTENER_IMMEDIATE);
+        messageBus->listen(DEVICE_ID_NOTIFY_ONE, DEVICE_EVT_ANY, scheduler_event, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    }
+
+    // register a period callback to drive the scheduler and any other registered components.
+    //new DeviceSystemTimerCallback(scheduler_tick);
 
 	fiber_flags |= DEVICE_SCHEDULER_RUNNING;
 }
@@ -332,7 +390,7 @@ void fiber_sleep(unsigned long t)
     // If the scheduler is not running, then simply perform a spin wait and exit.
     if (!fiber_scheduler_running())
     {
-        wait_ms(t);
+        delay_ms(t);
         return;
     }
 
@@ -437,7 +495,7 @@ int fiber_wake_on_event(uint16_t id, uint16_t value)
     }
 
     // Encode the event data in the context field. It's handy having a 32 bit core. :-)
-    f->context = value << 16 | id;
+    f->context = (uint32_t)value << 16 | id;
 
     // Remove ourselves from the run queue
     dequeue_fiber(f);
@@ -586,12 +644,18 @@ int invoke(void (*entry_fn)(void *), void *param)
  */
 void launch_new_fiber(void (*ep)(void), void (*cp)(void))
 {
+    Serial.println("LAUNCH");
+    while (1);
+
     // Execute the thread's entrypoint
     ep();
 
+    Serial.println("A EP");
+    while (!(UCSR0A & _BV(TXC0)));
     // Execute the thread's completion routine;
     cp();
 
+    Serial.println("A CP");
     // If we get here, then the completion routine didn't recycle the fiber... so do it anyway. :-)
     release_fiber();
 }
@@ -617,11 +681,14 @@ void launch_new_fiber_param(void (*ep)(void *), void (*cp)(void *), void *pm)
     release_fiber(pm);
 }
 
+
 Fiber *__create_fiber(uint32_t ep, uint32_t cp, uint32_t pm, int parameterised)
 {
     // Validate our parameters.
     if (ep == 0 || cp == 0)
         return NULL;
+
+    Serial.println("VALID");
 
     // Allocate a TCB from the new fiber. This will come from the fiber pool if availiable,
     // else a new one will be allocated on the heap.
@@ -631,16 +698,27 @@ Fiber *__create_fiber(uint32_t ep, uint32_t cp, uint32_t pm, int parameterised)
     if (newFiber == NULL)
         return NULL;
 
-    newFiber->tcb.R0 = (uint32_t) ep;
-    newFiber->tcb.R1 = (uint32_t) cp;
-    newFiber->tcb.R2 = (uint32_t) pm;
+    newFiber->tcb.R20 = low(pm);
+    newFiber->tcb.R21 = high(pm);
+    newFiber->tcb.R22 = low(cp);
+    newFiber->tcb.R23 = high(cp);
+    newFiber->tcb.R24 = low(ep);
+    newFiber->tcb.R25 = high(ep);
+
+    Serial.println("conf");
 
     // Set the stack and assign the link register to refer to the appropriate entry point wrapper.
-    newFiber->tcb.SP = CORTEX_M0_STACK_BASE - 0x04;
-    newFiber->tcb.LR = parameterised ? (uint32_t) &launch_new_fiber_param : (uint32_t) &launch_new_fiber;
+    newFiber->tcb.SPHI = high(RAMEND - 0x02);
+    newFiber->tcb.SPLO = low(RAMEND - 0x02);
+
+    newFiber->tcb.lr = parameterised ? (uint16_t) &launch_new_fiber_param : (uint16_t) &launch_new_fiber;
+
+    Serial.println("ret set");
 
     // Add new fiber to the run queue.
     queue_fiber(newFiber, &runQueue);
+
+    Serial.println("queued");
 
     return newFiber;
 }
@@ -730,14 +808,25 @@ void release_fiber(void)
 void verify_stack_size(Fiber *f)
 {
     // Ensure the stack buffer is large enough to hold the stack Reallocate if necessary.
-    uint32_t stackDepth;
-    uint32_t bufferSize;
+    uint16_t stackDepth;
+    uint16_t bufferSize;
+
+    uint16_t stack_pointer = SPH << 8 | SPL;
+
+    Serial.print("VF SP: ");
+    Serial.println(stack_pointer);
 
     // Calculate the stack depth.
-    stackDepth = f->tcb.stack_base - ((uint32_t) __get_MSP());
+    stackDepth = f->tcb.stack_base - stack_pointer;
 
     // Calculate the size of our allocated stack buffer
     bufferSize = f->stack_top - f->stack_bottom;
+
+    Serial.print("VF SD: ");
+    Serial.println(stackDepth);
+
+    Serial.print("VF BS: ");
+    Serial.println(bufferSize);
 
     // If we're too small, increase our buffer size.
     if (bufferSize < stackDepth)
@@ -745,15 +834,23 @@ void verify_stack_size(Fiber *f)
         // To ease heap churn, we choose the next largest multple of 32 bytes.
         bufferSize = (stackDepth + 32) & 0xffffffe0;
 
+        Serial.print("VF NEW: ");
+        Serial.println(bufferSize);
+
         // Release the old memory
         if (f->stack_bottom != 0)
             free((void *)f->stack_bottom);
 
         // Allocate a new one of the appropriate size.
-        f->stack_bottom = (uint32_t) malloc(bufferSize);
+        f->stack_bottom = (uint16_t) malloc(bufferSize);
 
         // Recalculate where the top of the stack is and we're done.
         f->stack_top = f->stack_bottom + bufferSize;
+
+        Serial.print("VF SB: ");
+        Serial.println(f->stack_bottom);
+        Serial.print("VF ST: ");
+        Serial.println(f->stack_top);
     }
 }
 
@@ -774,8 +871,14 @@ int scheduler_runqueue_empty()
   */
 void schedule()
 {
+    Serial.println("SCHED");
+    while (!(UCSR0A & _BV(TXC0)));
+
     if (!fiber_scheduler_running())
-		return;
+        return;
+
+    Serial.println("FB");
+    while (!(UCSR0A & _BV(TXC0)));
 
     // First, take a reference to the currently running fiber;
     Fiber *oldFiber = currentFiber;
@@ -791,7 +894,7 @@ void schedule()
         forkedFiber->flags |= DEVICE_FIBER_FLAG_CHILD;
 
         // Define the stack base of the forked fiber to be align with the entry point of the parent fiber
-        forkedFiber->tcb.stack_base = currentFiber->tcb.SP;
+        forkedFiber->tcb.stack_base = currentFiber->tcb.SPHI << 8 | currentFiber->tcb.SPLO;
 
         // Ensure the stack allocation of the new fiber is large enough
         verify_stack_size(forkedFiber);
@@ -847,25 +950,42 @@ void schedule()
     // Don't bother with the overhead of switching if there's only one fiber on the runqueue!
     if (currentFiber != oldFiber)
     {
+        Serial.println("SWAP");
+        while (!(UCSR0A & _BV(TXC0)));
         // Special case for the idle task, as we don't maintain a stack context (just to save memory).
         if (currentFiber == idleFiber)
         {
-            idleFiber->tcb.SP = CORTEX_M0_STACK_BASE - 0x04;
-            idleFiber->tcb.LR = (uint32_t) &idle_task;
+            Serial.println("CONF IDLE");
+            idleFiber->tcb.SPHI = high(RAMEND - 0x02);
+            idleFiber->tcb.SPLO = low(RAMEND - 0x02);
+
+            idleFiber->tcb.lr = (uint16_t)&idle_task;
         }
 
         if (oldFiber == idleFiber)
         {
+            Serial.println("SW1");
+            while (!(UCSR0A & _BV(TXC0)));
             // Just swap in the new fiber, and discard changes to stack and register context.
-            swap_context(NULL, &currentFiber->tcb, 0, currentFiber->stack_top);
+            swap_context(NULL, &currentFiber->tcb, (uint16_t)0, (uint16_t)currentFiber->stack_top);
         }
         else
         {
             // Ensure the stack allocation of the fiber being scheduled out is large enough
             verify_stack_size(oldFiber);
 
+            /*Serial.println("Old Fiber");
+            print_fiber(oldFiber);
+            Serial.println("New Fiber");
+            print_fiber(currentFiber);*/
+
+            Serial.println("SW2");
+            while (!(UCSR0A & _BV(TXC0)));
             // Schedule in the new fiber.
-            swap_context(&oldFiber->tcb, &currentFiber->tcb, oldFiber->stack_top, currentFiber->stack_top);
+            swap_context(&oldFiber->tcb, &currentFiber->tcb, (uint16_t)oldFiber->stack_top, (uint16_t)currentFiber->stack_top);
+
+            Serial.println("AFT");
+            while (!(UCSR0A & _BV(TXC0)));
         }
     }
 }
@@ -926,7 +1046,13 @@ void idle()
 
     // If the above did create any useful work, enter power efficient sleep.
     if(scheduler_runqueue_empty())
-    	__WFE();
+    {
+        cli();
+        sleep_enable();
+        sei();
+        sleep_cpu();
+        sleep_disable();
+    }
 }
 
 /**
@@ -938,6 +1064,7 @@ void idle_task()
 {
     while(1)
     {
+        Serial.println("TEST");
         idle();
         schedule();
     }
