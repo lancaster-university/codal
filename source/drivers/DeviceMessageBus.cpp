@@ -52,6 +52,8 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceFiber.h"
 #include "ErrorNo.h"
 
+#include "Arduino.h"
+
 /**
   * Default constructor.
   *
@@ -80,6 +82,8 @@ DeviceMessageBus::DeviceMessageBus()
 void async_callback(void *param)
 {
 	DeviceListener *listener = (DeviceListener *)param;
+
+    //Serial.println("CB");
 
     // OK, now we need to decide how to behave depending on our configuration.
     // If this a fiber f already active within this listener then check our
@@ -110,15 +114,31 @@ void async_callback(void *param)
     {
         // Firstly, check for a method callback into an object.
         if (listener->flags & MESSAGE_BUS_LISTENER_METHOD)
+        {
+            //Serial.println("ME");
             listener->cb_method->fire(listener->evt);
+        }
+
 
         // Now a parameterised C function
         else if (listener->flags & MESSAGE_BUS_LISTENER_PARAMETERISED)
+        {
+            //Serial.println("PA");
             listener->cb_param(listener->evt, listener->cb_arg);
+        }
+
 
         // We must have a plain C function
         else
+        {
+            //Serial.println("CF");
+            //while (!(UCSR0A & _BV(TXC0)));
             listener->cb(listener->evt);
+
+            //Serial.println("AFT");
+            //while (!(UCSR0A & _BV(TXC0)));
+        }
+
 
         // If there are more events to process, dequeue the next one and process it.
         if ((listener->flags & MESSAGE_BUS_LISTENER_QUEUE_IF_BUSY) && listener->evt_queue)
@@ -291,6 +311,9 @@ void DeviceMessageBus::idleTick()
 
         // Pull the next event to process, if there is one.
         item = this->dequeueEvent();
+
+        //Serial.println("COMP");
+        //while (!(UCSR0A & _BV(TXC0)));
     }
 }
 
@@ -339,11 +362,12 @@ int DeviceMessageBus::send(DeviceEvent evt)
   */
 int DeviceMessageBus::process(DeviceEvent &evt, bool urgent)
 {
-	DeviceListener *l;
+    DeviceListener *l;
     int complete = 1;
     bool listenerUrgent;
 
     l = listeners;
+
     while (l != NULL)
     {
 	    if((l->id == evt.source || l->id == DEVICE_ID_ANY) && (l->value == evt.value || l->value == DEVICE_EVT_ANY))
@@ -365,19 +389,20 @@ int DeviceMessageBus::process(DeviceEvent &evt, bool urgent)
                 // Otherwise, we invoke it in a 'fork on block' context, that will automatically create a fiber
                 // should the event handler attempt a blocking operation, but doesn't have the overhead
                 // of creating a fiber needlessly. (cool huh?)
-				if (l->flags & MESSAGE_BUS_LISTENER_NONBLOCKING || !fiber_scheduler_running())
-					async_callback(l);
-				else
-					invoke(async_callback, l);
+                if (l->flags & MESSAGE_BUS_LISTENER_NONBLOCKING || !fiber_scheduler_running())
+                    async_callback(l);
+                else
+                    invoke(async_callback, l);
             }
             else
-            {
                 complete = 0;
-            }
-		}
+        }
 
-		l = l->next;
-	}
+        l = l->next;
+    }
+
+    //Serial.println("EXIT");
+    //while (!(UCSR0A & _BV(TXC0)));
 
     return complete;
 }

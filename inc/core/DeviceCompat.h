@@ -32,6 +32,7 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_COMPAT_H
 
 #include "DeviceConfig.h"
+#include <avr/interrupt.h>
 
 #ifndef PI
 #define PI 3.14159265359
@@ -93,6 +94,20 @@ inline void *memclr(void *a, size_t b)
 inline bool isdigit(char c)
 {
     return (c > 47 && c < 58);
+}
+#endif
+
+#ifndef __enable_irq
+inline void __enable_irq()
+{
+    sei();
+}
+#endif
+
+#ifndef __disable_irq
+inline void __disable_irq()
+{
+    cli();
 }
 #endif
 

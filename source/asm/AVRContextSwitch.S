@@ -30,6 +30,27 @@
 ;       * Pointer to the where the new Fibers' stack is saved (r18, r19)
 ;--------------------------
 swap_context:
+; we can't really factor this out without pushing registers of another stack frame...
+; this repetitive code is a lot simpler
+    PUSH r2
+    PUSH r3
+    PUSH r4
+    PUSH r5
+    PUSH r6
+    PUSH r7
+    PUSH r8
+    PUSH r9
+    PUSH r10
+    PUSH r11
+    PUSH r12
+    PUSH r13
+    PUSH r14
+    PUSH r15
+    PUSH r16
+    PUSH r17
+    PUSH r28
+    PUSH r29
+
 ; validation check
     CPI r20, 0
     BRNE swap_context_cont
@@ -153,8 +174,11 @@ set_args:
     LD r24, X+
     LD r25, X+
 
-restore_stack_complete:
     RET
+
+restore_stack_complete:
+; finished, pop our clogs
+    JMP pop_regs
 
 
 ;--------------------------
@@ -167,6 +191,27 @@ restore_stack_complete:
 ;       * Pointer to where the stack should be saved (r22, r23)
 ;--------------------------
 save_context:
+; we can't really factor this out without pushing registers of another stack frame...
+; this repetitive code is a lot simpler
+    PUSH r2
+    PUSH r3
+    PUSH r4
+    PUSH r5
+    PUSH r6
+    PUSH r7
+    PUSH r8
+    PUSH r9
+    PUSH r10
+    PUSH r11
+    PUSH r12
+    PUSH r13
+    PUSH r14
+    PUSH r15
+    PUSH r16
+    PUSH r17
+    PUSH r28
+    PUSH r29
+
 ; load our fibers RAM stack pointer (args r22, r23)
     MOV ZL, r22
     MOV ZH, r23
@@ -204,24 +249,45 @@ save_stack_validation:
 ;--------------------------
 ; save_register_context
 ;
-; simply saves the stack pointer in the case of the AVR
+; pushes our call saved regs and simply saves the stack pointer
 ;
 ; ARGS:
 ;       * Pointer to the Fibers' TCB (r24, r25)
 ;--------------------------
 save_register_context:
-    IN r15, SPLO
-    IN r16, SPHI
+; we can't really factor this out without pushing registers of another stack frame...
+; this repetitive code is a lot simpler
+    PUSH r2
+    PUSH r3
+    PUSH r4
+    PUSH r5
+    PUSH r6
+    PUSH r7
+    PUSH r8
+    PUSH r9
+    PUSH r10
+    PUSH r11
+    PUSH r12
+    PUSH r13
+    PUSH r14
+    PUSH r15
+    PUSH r16
+    PUSH r17
+    PUSH r28
+    PUSH r29
+
+    IN r18, SPLO
+    IN r19, SPHI
 
     MOV XL, r24
     MOV XH, r25
 
-;STORE SPLO AND HI into OUR TCB
-    ST X+, r15
-    ST X+, r16
+; STORE SPLO AND HI into OUR TCB
+    ST X+, r18
+    ST X+, r19
 
-; finished
-    RET
+; finished, pop our clogs
+    JMP pop_regs
 
 ;--------------------------
 ; restore_register_context
@@ -232,14 +298,43 @@ save_register_context:
 ;       * Pointer to the Fibers' TCB (r24, r25)
 ;--------------------------
 restore_register_context:
+
 ;NEED TO ADD NULL CHECKS
+    IN r18, SPLO
+    IN r19, SPHI
+
     MOV XL, r24
     MOV XH, r25
 
-    LD r16, X+
-    LD r17, X+
+    LD r18, X+
+    LD r19, X+
 
-    OUT SPLO, r16
-    OUT SPHI, r17
-; finished
+    OUT SPLO, r18
+    OUT SPHI, r19
+
+; finished, pop our clogs
+    JMP pop_regs
+
+;--------------------------
+; pop_regs:
+;--------------------------
+pop_regs:
+    POP r2
+    POP r3
+    POP r4
+    POP r5
+    POP r6
+    POP r7
+    POP r8
+    POP r9
+    POP r10
+    POP r11
+    POP r12
+    POP r13
+    POP r14
+    POP r15
+    POP r16
+    POP r17
+    POP r28
+    POP r29
     RET

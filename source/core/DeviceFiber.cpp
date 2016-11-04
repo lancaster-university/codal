@@ -128,7 +128,7 @@ static DeviceComponent* idleThreadComponents[DEVICE_IDLE_COMPONENTS];
   */
 void queue_fiber(Fiber *f, Fiber **queue)
 {
-    cli();
+    __disable_irq();
 
     // Record which queue this fiber is on.
     f->queue = queue;
@@ -155,7 +155,7 @@ void queue_fiber(Fiber *f, Fiber **queue)
         f->next = NULL;
     }
 
-    sei();
+    __enable_irq();
 }
 
 /**
@@ -170,7 +170,7 @@ void dequeue_fiber(Fiber *f)
         return;
 
     // Remove this fiber fromm whichever queue it is on.
-    cli();
+    __disable_irq();
 
     if (f->prev != NULL)
         f->prev->next = f->next;
@@ -184,8 +184,7 @@ void dequeue_fiber(Fiber *f)
     f->prev = NULL;
     f->queue = NULL;
 
-    sei();
-
+    __enable_irq();
 }
 
 /**
@@ -195,7 +194,7 @@ Fiber *getFiberContext()
 {
     Fiber *f;
 
-    cli();
+    __disable_irq();
 
     if (fiberPool != NULL)
     {
@@ -215,7 +214,7 @@ Fiber *getFiberContext()
         f->stack_top = 0;
     }
 
-    sei();
+    __enable_irq();
 
     // Ensure this fiber is in suitable state for reuse.
     f->flags = 0;
@@ -601,9 +600,15 @@ int invoke(void (*entry_fn)(void *), void *param)
         return DEVICE_OK;
     }
 
+    //Serial.println("BEFORE SAVE");
+    //while (!(UCSR0A & _BV(TXC0)));
+
     // Snapshot current context, but also update the Link Register to
     // refer to our calling function.
     save_register_context(&currentFiber->tcb);
+
+    //Serial.println("AFTER SAVE");
+    //while (!(UCSR0A & _BV(TXC0)));
 
     // If we're here, there are two possibilities:
     // 1) We're about to attempt to execute the user code
@@ -811,12 +816,13 @@ void verify_stack_size(Fiber *f)
     uint16_t bufferSize;
 
     uint16_t stack_pointer = SPH << 8 | SPL;
+    stack_pointer -= 17;
 
-    Serial.print("launch_n_f: ");
+    /*Serial.print("launch_n_f: ");
     Serial.println((int)&launch_new_fiber);
 
     Serial.print("VF SP: ");
-    Serial.println(stack_pointer);
+    Serial.println(stack_pointer);*/
 
     // Calculate the stack depth.
     stackDepth = RAMEND - stack_pointer;
@@ -824,11 +830,11 @@ void verify_stack_size(Fiber *f)
     // Calculate the size of our allocated stack buffer
     bufferSize = f->stack_top - f->stack_bottom;
 
-    Serial.print("VF SD: ");
+    /*Serial.print("VF SD: ");
     Serial.println(stackDepth);
 
     Serial.print("VF BS: ");
-    Serial.println(bufferSize);
+    Serial.println(bufferSize);*/
 
     // If we're too small, increase our buffer size.
     if (bufferSize < stackDepth)
@@ -836,8 +842,8 @@ void verify_stack_size(Fiber *f)
         // To ease heap churn, we choose the next largest multple of 32 bytes.
         bufferSize = (stackDepth + 32) & 0xffffffe0;
 
-        Serial.print("VF NEW: ");
-        Serial.println(bufferSize);
+        //Serial.print("VF NEW: ");
+        //Serial.println(bufferSize);
 
         // Release the old memory
         if (f->stack_bottom != 0)
@@ -849,10 +855,10 @@ void verify_stack_size(Fiber *f)
         // Recalculate where the top of the stack is and we're done.
         f->stack_top = f->stack_bottom + bufferSize;
 
-        Serial.print("VF SB: ");
+        /*Serial.print("VF SB: ");
         Serial.println(f->stack_bottom);
         Serial.print("VF ST: ");
-        Serial.println(f->stack_top);
+        Serial.println(f->stack_top);*/
     }
 }
 
@@ -873,14 +879,11 @@ int scheduler_runqueue_empty()
   */
 void schedule()
 {
-    Serial.println("SCHED");
-    while (!(UCSR0A & _BV(TXC0)));
-
     if (!fiber_scheduler_running())
         return;
 
-    Serial.println("FB");
-    while (!(UCSR0A & _BV(TXC0)));
+    //Serial.println("SCHED");
+    //while (!(UCSR0A & _BV(TXC0)));
 
     // First, take a reference to the currently running fiber;
     Fiber *oldFiber = currentFiber;
@@ -953,7 +956,7 @@ void schedule()
     // Don't bother with the overhead of switching if there's only one fiber on the runqueue!
     if (currentFiber != oldFiber)
     {
-        while (!(UCSR0A & _BV(TXC0)));
+
         // Special case for the idle task, as we don't maintain a stack context (just to save memory).
         if (currentFiber == idleFiber)
         {
@@ -965,8 +968,8 @@ void schedule()
 
         if (oldFiber == idleFiber)
         {
-            Serial.println("SW1");
-            while (!(UCSR0A & _BV(TXC0)));
+            //Serial.println("SW1");
+            //while (!(UCSR0A & _BV(TXC0)));
             // Just swap in the new fiber, and discard changes to stack and register context.
             swap_context(NULL, &currentFiber->tcb, (uint16_t)0, (uint16_t)currentFiber->stack_top);
         }
@@ -974,8 +977,7 @@ void schedule()
         {
             // Ensure the stack allocation of the fiber being scheduled out is large enough
             verify_stack_size(oldFiber);
-
-            Serial.println("______________________");
+            /*Serial.println("______________________");
             Serial.println("Old Fiber");
             print_fiber(oldFiber);
             Serial.println("______________________");
@@ -983,12 +985,12 @@ void schedule()
             print_fiber(currentFiber);
 
             Serial.println("SW2");
-            while (!(UCSR0A & _BV(TXC0)));
+            while (!(UCSR0A & _BV(TXC0)));*/
             // Schedule in the new fiber.
             swap_context(&oldFiber->tcb, &currentFiber->tcb, (uint16_t)oldFiber->stack_top, (uint16_t)currentFiber->stack_top);
 
-            Serial.println("AFT");
-            while (!(UCSR0A & _BV(TXC0)));
+            //Serial.println("AFT");
+            //while (!(UCSR0A & _BV(TXC0)));
         }
     }
 }
@@ -1050,9 +1052,9 @@ void idle()
     // If the above did create any useful work, enter power efficient sleep.
     if(scheduler_runqueue_empty())
     {
-        cli();
+        __disable_irq();
         sleep_enable();
-        sei();
+        __enable_irq();
         sleep_cpu();
         sleep_disable();
     }
@@ -1065,10 +1067,8 @@ void idle()
   */
 void idle_task()
 {
-    Serial.println("IDLE");
     while(1)
     {
-
         idle();
         schedule();
     }

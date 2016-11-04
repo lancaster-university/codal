@@ -26,7 +26,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef DEVICE_MESSAGE_BUS_H
 #define DEVICE_MESSAGE_BUS_H
 
-#include "mbed.h"
 #include "DeviceConfig.h"
 #include "DeviceComponent.h"
 #include "DeviceEvent.h"
@@ -139,6 +138,8 @@ class DeviceMessageBus : public EventModel, public DeviceComponent
       */
     virtual int remove(DeviceListener *newListener);
 
+    virtual void idleTick();
+
 	private:
 
     DeviceListener            *listeners;		    // Chain of active listeners.
@@ -175,7 +176,7 @@ class DeviceMessageBus : public EventModel, public DeviceComponent
       * Process at least one event from the event queue, if it is not empty.
       * We then continue processing events until something appears on the runqueue.
       */
-    virtual void idleTick();
+    //virtual void idleTick();
 };
 
 #endif

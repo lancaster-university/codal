@@ -8,9 +8,11 @@
             "+<source/core/*.cpp>",
             "+<source/types/DeviceEvent.cpp>",
             "+<source/asm/AVRContextSwitch.S>",
+            "+<source/device/Timer1.cpp>",
+            "+<source/drivers/DeviceMessageBus.cpp>",
             "-<source/core/DeviceSystemTimer.cpp>",
             "-<source/core/DeviceHeapAllocator.cpp>"
         ],
-        "flags":"-Iinc/core -Iinc/types -Iinc/platform"
+        "flags":"-Iinc/core -Iinc/device -Iinc/drivers -Iinc/types -Iinc/platform"
     }
 }

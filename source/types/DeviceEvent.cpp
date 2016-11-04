@@ -58,6 +58,7 @@ DeviceEvent::DeviceEvent(uint16_t source, uint16_t value, DeviceEventLaunchMode 
 {
     this->source = source;
     this->value = value;
+    this->timestamp = 0;
     //this->timestamp = system_timer_current_time_us();
 
     if(mode != CREATE_ONLY)
@@ -71,6 +72,7 @@ DeviceEvent::DeviceEvent()
 {
     this->source = 0;
     this->value = 0;
+    this->timestamp = 0;
     //this->timestamp = system_timer_current_time_us();
 }
 
