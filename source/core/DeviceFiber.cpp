@@ -264,10 +264,9 @@ void scheduler_init(EventModel &_messageBus)
         // Register to receive events in the NOTIFY channel - this is used to implement wait-notify semantics
         messageBus->listen(DEVICE_ID_NOTIFY, DEVICE_EVT_ANY, scheduler_event, MESSAGE_BUS_LISTENER_IMMEDIATE);
         messageBus->listen(DEVICE_ID_NOTIFY_ONE, DEVICE_EVT_ANY, scheduler_event, MESSAGE_BUS_LISTENER_IMMEDIATE);
-    }
 
-    // register a period callback to drive the scheduler and any other registered components.
-    //new DeviceSystemTimerCallback(scheduler_tick);
+        messageBus->every(SCHEDULER_TICK_PERIOD_MS, scheduler_tick, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    }
 
 	fiber_flags |= DEVICE_SCHEDULER_RUNNING;
 }
@@ -290,17 +289,19 @@ int fiber_scheduler_running()
   * This function checks to determine if any fibers blocked on the sleep queue need to be woken up
   * and made runnable.
   */
-void scheduler_tick()
+void scheduler_tick(DeviceEvent evt)
 {
     Fiber *f = sleepQueue;
     Fiber *t;
+
+    evt.timestamp /= 1000;
 
     // Check the sleep queue, and wake up any fibers as necessary.
     while (f != NULL)
     {
         t = f->next;
 
-        if (system_timer_current_time() >= f->context)
+        if (evt.timestamp >= f->context)
         {
             // Wakey wakey!
             dequeue_fiber(f);
@@ -401,7 +402,7 @@ void fiber_sleep(unsigned long t)
         // If we're out of memory, there's nothing we can do.
         // keep running in the context of the current thread as a best effort.
         if (forkedFiber != NULL)
-                f = forkedFiber;
+            f = forkedFiber;
     }
 
     // Calculate and store the time we want to wake up.
@@ -1045,9 +1046,9 @@ int fiber_remove_idle_component(DeviceComponent *component)
 void idle()
 {
     // Service background tasks
-    for(int i = 0; i < DEVICE_IDLE_COMPONENTS; i++)
+    /*for(int i = 0; i < DEVICE_IDLE_COMPONENTS; i++)
         if(idleThreadComponents[i] != NULL)
-            idleThreadComponents[i]->idleTick();
+            idleThreadComponents[i]->idleTick();*/
 
     // If the above did create any useful work, enter power efficient sleep.
     if(scheduler_runqueue_empty())

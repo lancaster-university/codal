@@ -5,7 +5,7 @@
 
 #define TIMER_ONE_PRESCALER_OPTIONS       5
 
-class Timer1 : SystemClock
+class Timer1 : public SystemClock
 {
     void read();
     int setClockSelect(uint64_t periodUs);
@@ -17,6 +17,7 @@ public:
 
     int setTime(uint64_t timestamp);
     uint64_t getTime();
+    uint64_t getTimeUs();
 
     int eventAfterUs(uint64_t interval, uint16_t value);
     int eventAfter(uint64_t interval, uint16_t value);

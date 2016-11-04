@@ -1,6 +1,7 @@
 #include "Timer1.h"
 #include "DeviceEvent.h"
 #include "DeviceCompat.h"
+#include "DeviceSystemTimer.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -37,7 +38,7 @@ void set_interrupt(uint32_t time_us)
     // calculate the timer value based on a number
     uint32_t tick_time = ins_frequency * clock_configuration->prescaleValue;
 
-    uint16_t new_value =((uint32_t)time_us * 1000) / tick_time;
+    uint16_t new_value = (time_us * 1000) / tick_time;
 
     counter = TCNT1;
 
@@ -105,10 +106,10 @@ void consume_events(uint8_t compareEvent)
 
         if(!interrupt_set && tmp->countUs < overflow_period)
         {
-            // calculate the timer value based on a number
+            // calculate the timer value based on timestamp us
             uint32_t tickTime = ins_frequency * clock_configuration->prescaleValue;
 
-            OCR1A = (uint16_t)(((uint32_t)tmp->countUs * 1000) / tickTime);
+            OCR1A = (uint16_t)((uint32_t)(tmp->countUs * 1000) / tickTime);
             TIMSK1 |= _BV(OCIE1A);
             interrupt_set = 1;
         }
@@ -126,6 +127,9 @@ ISR(TIMER1_COMPA_vect)
 {
     // unset our compare interrupt and consume any Clock events.
     TIMSK1 &= ~_BV(OCIE1A);
+    __disable_irq();
+    TCNT1 = 0;
+    __enable_irq();
     consume_events(1);
 }
 
@@ -176,12 +180,14 @@ int Timer1::setClockSelect(uint64_t precisionUs)
 
     overflow_period = ((TIMER_1_MAX - 1) * timerTickNs) / 1000;
 
+    overflow_period >>= 1;
+
     return DEVICE_OK;
 }
 
 Timer1::Timer1(uint16_t id)
 {
-    timer_id = id;
+    this->id = timer_id = id;
     ins_frequency = 1000000 / ((uint32_t)F_CPU / 1000);
 }
 
@@ -190,6 +196,9 @@ int Timer1::init()
 {
     if(status & SYSTEM_CLOCK_INIT)
         return DEVICE_OK;
+
+    if(system_timer_get_instance() == NULL)
+        system_timer_set_instance(this);
 
     // clear control register A
     TCCR1A = 0;
@@ -211,6 +220,11 @@ int Timer1::setTime(uint64_t timestamp)
 }
 
 uint64_t Timer1::getTime()
+{
+    return getTimeUs() / 1000;
+}
+
+uint64_t Timer1::getTimeUs()
 {
     read();
     return current_time_us;

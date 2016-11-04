@@ -31,6 +31,7 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceEvent.h"
 #include "DeviceListener.h"
 #include "EventModel.h"
+#include "SystemClock.h"
 
 /**
   * Class definition for the DeviceMessageBus.
@@ -66,7 +67,7 @@ class DeviceMessageBus : public EventModel, public DeviceComponent
       * Adds itself as a fiber component, and also configures itself to be the
       * default EventModel if defaultEventBus is NULL.
 	  */
-    DeviceMessageBus();
+    DeviceMessageBus(SystemClock& timer);
 
 	/**
 	  * Queues the given event to be sent to all registered recipients.
@@ -138,9 +139,43 @@ class DeviceMessageBus : public EventModel, public DeviceComponent
       */
     virtual int remove(DeviceListener *newListener);
 
-    virtual void idleTick();
+    /**
+      *
+      */
+    virtual int everyUs(uint64_t period, void (*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+    /**
+      *
+      */
+    virtual int everyUs(uint64_t period, void (*handler)(DeviceEvent, void*), void* arg, uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+    /**
+      *
+      */
+    template <typename T>
+    int everyUs(uint64_t period, T*object, void (T::*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+    /**
+      *
+      */
+    virtual int afterUs(uint64_t period, void (*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+    /**
+      *
+      */
+    virtual int afterUs(uint64_t period, void (*handler)(DeviceEvent, void*), void* arg, uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+    /**
+      *
+      */
+    template <typename T>
+    int afterUs(uint64_t period, T*object, void (T::*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
 
 	private:
+
+    SystemClock&    clock;
+    uint16_t        eventHandle;
 
     DeviceListener            *listeners;		    // Chain of active listeners.
     DeviceEventQueueItem      *evt_queue_head;    // Head of queued events to be processed.
@@ -176,7 +211,7 @@ class DeviceMessageBus : public EventModel, public DeviceComponent
       * Process at least one event from the event queue, if it is not empty.
       * We then continue processing events until something appears on the runqueue.
       */
-    //virtual void idleTick();
+    virtual void idleTick();
 };
 
 #endif

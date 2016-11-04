@@ -1,3 +1,6 @@
+#ifndef CODAL_SYSTEM_CLOCK_H
+#define CODAL_SYSTEM_CLOCK_H
+
 #include <stdint.h>
 
 #include "DeviceComponent.h"
@@ -32,7 +35,7 @@ struct ClockEvent
 
         list_add(&this->list, iter);
     }
-    
+
     ClockEvent(uint64_t period, int value, list_head* head, bool repeating = false)
     {
         this->countUs = period;
@@ -59,16 +62,24 @@ class SystemClock : protected DeviceComponent
 public:
     SystemClock() {};
 
-    virtual int init() { return DEVICE_OK; };
+    virtual int init() { return DEVICE_NOT_SUPPORTED; };
 
-    virtual int setTime(uint64_t timestamp) { return DEVICE_OK; };
+    virtual int setTime(uint64_t timestamp) { return DEVICE_NOT_SUPPORTED; };
     virtual uint64_t getTime() { return 0; };
+    virtual uint64_t getTimeUs() { return 0; };
 
-    virtual int eventAfter(uint64_t interval, uint16_t value) { return DEVICE_OK; };
-    virtual int eventEvery(uint64_t interval, uint16_t value) { return DEVICE_OK; };
+    virtual uint16_t getId() { return this->id; };
 
-    virtual int start() { return DEVICE_OK; };
-    virtual int stop() { return DEVICE_OK; };
+    virtual int eventAfterUs(uint64_t interval, uint16_t value) { return DEVICE_NOT_SUPPORTED; };
+    virtual int eventAfter(uint64_t interval, uint16_t value) { return DEVICE_NOT_SUPPORTED; };
+
+    virtual int eventEveryUs(uint64_t interval, uint16_t value) { return DEVICE_NOT_SUPPORTED; };
+    virtual int eventEvery(uint64_t interval, uint16_t value) { return DEVICE_NOT_SUPPORTED; };
+
+    virtual int start() { return DEVICE_NOT_SUPPORTED; };
+    virtual int stop() { return DEVICE_NOT_SUPPORTED; };
 
     virtual ~SystemClock() { stop(); };
 };
+
+#endif

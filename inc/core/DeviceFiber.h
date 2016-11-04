@@ -196,7 +196,7 @@ void fiber_sleep(unsigned long t);
   * This function checks to determine if any fibers blocked on the sleep queue need to be woken up
   * and made runnable.
   */
-void scheduler_tick();
+void scheduler_tick(DeviceEvent);
 
 /**
   * Blocks the calling thread until the specified event is raised.

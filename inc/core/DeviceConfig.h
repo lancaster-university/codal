@@ -113,8 +113,8 @@ DEALINGS IN THE SOFTWARE.
 
 // Scheduling quantum (milliseconds)
 // Also used to drive the codal device runtime system ticker.
-#ifndef SYSTEM_TICK_PERIOD_MS
-#define SYSTEM_TICK_PERIOD_MS                   6
+#ifndef SCHEDULER_TICK_PERIOD_MS
+#define SCHEDULER_TICK_PERIOD_MS                   6
 #endif
 
 //

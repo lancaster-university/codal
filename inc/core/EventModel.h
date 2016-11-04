@@ -64,9 +64,8 @@ class EventModel
       *
       * @return This default implementation simply returns DEVICE_NOT_SUPPORTED.
 	  */
-	virtual int send(DeviceEvent evt)
+	virtual int send(DeviceEvent)
     {
-        (void) evt;
         return DEVICE_NOT_SUPPORTED;
     }
 
@@ -77,9 +76,8 @@ class EventModel
      *
      * @return This default implementation simply returns DEVICE_NOT_SUPPORTED.
      */
-    virtual int add(DeviceListener *listener)
+    virtual int add(DeviceListener*)
     {
-        (void) listener;
         return DEVICE_NOT_SUPPORTED;
     }
 
@@ -90,9 +88,8 @@ class EventModel
      *
      * @return This default implementation simply returns DEVICE_NOT_SUPPORTED.
      */
-    virtual int remove(DeviceListener *listener)
+    virtual int remove(DeviceListener *)
     {
-        (void) listener;
         return DEVICE_NOT_SUPPORTED;
     }
 
@@ -103,9 +100,8 @@ class EventModel
       *
       * @return This default implementation simply returns NULL.
       */
-    DeviceListener *elementAt(int n)
+    DeviceListener *elementAt(int)
     {
-        (void) n;
         return NULL;
     }
 
@@ -255,6 +251,94 @@ class EventModel
 	int listen(uint16_t id, uint16_t value, T* object, void (T::*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
 
 
+    /**
+      *
+      */
+    virtual int after(uint64_t period, void (*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+    {
+        return afterUs(period * 1000, handler, flags);
+    }
+
+    /**
+      *
+      */
+    virtual int after(uint64_t period, void (* handler)(DeviceEvent, void*), void* arg, uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+    {
+        return afterUs(period * 1000, handler, arg, flags);
+    }
+
+    /**
+      *
+      */
+    template <typename T>
+    int after(uint64_t, T*, void (T::*)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+    /**
+      *
+      */
+    virtual int afterUs(uint64_t, void (*)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+    {
+        return DEVICE_NOT_SUPPORTED;
+    }
+
+    /**
+      *
+      */
+    virtual int afterUs(uint64_t, void (*)(DeviceEvent, void*), void*, uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+    {
+        return DEVICE_NOT_SUPPORTED;
+    }
+
+    /**
+      *
+      */
+    template <typename T>
+    int afterUs(uint64_t, T*, void (T::*)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+     /**
+       *
+       */
+     virtual int every(uint64_t period, void (*handler)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+     {
+         return everyUs(period * 1000, handler, flags);
+     }
+
+     /**
+       *
+       */
+     virtual int every(uint64_t period, void (*handler)(DeviceEvent, void*), void* arg, uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+     {
+         return everyUs(period * 1000, handler, arg, flags);
+     }
+
+     /**
+       *
+       */
+     template <typename T>
+     int every(uint64_t, T*, void (T::*)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
+     /**
+       *
+       */
+     virtual int everyUs(uint64_t, void (*)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+     {
+         return DEVICE_NOT_SUPPORTED;
+     }
+
+     /**
+       *
+       */
+     virtual int everyUs(uint64_t, void (*)(DeviceEvent, void*), void*, uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS)
+     {
+         return DEVICE_NOT_SUPPORTED;
+     }
+
+     /**
+       *
+       */
+     template <typename T>
+     int everyUs(uint64_t, T*, void (T::*)(DeviceEvent), uint16_t flags = EVENT_LISTENER_DEFAULT_FLAGS);
+
 	/**
 	  * Unregister a listener function.
       * Listeners are identified by the Event ID, Event value and handler registered using listen().
@@ -385,6 +469,30 @@ int EventModel::listen(uint16_t id, uint16_t value, T* object, void (T::*handler
         return DEVICE_OK;
 
     delete newListener;
+    return DEVICE_NOT_SUPPORTED;
+}
+
+template <typename T>
+int EventModel::after(uint64_t period, T* object, void (T::*handler)(DeviceEvent), uint16_t flags)
+{
+    return afterUs(period * 1000, object, handler, flags);
+}
+
+template <typename T>
+int EventModel::afterUs(uint64_t, T*, void (T::*)(DeviceEvent), uint16_t flags)
+{
+    return DEVICE_NOT_SUPPORTED;
+}
+
+template <typename T>
+int EventModel::every(uint64_t period, T* object, void (T::* handler)(DeviceEvent), uint16_t flags)
+{
+    return everyUs(period * 1000, object, handler, flags);
+}
+
+template <typename T>
+int EventModel::everyUs(uint64_t, T*, void (T::*)(DeviceEvent), uint16_t flags)
+{
     return DEVICE_NOT_SUPPORTED;
 }
 
