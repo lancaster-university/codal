@@ -133,6 +133,9 @@ ISR(TIMER1_COMPA_vect)
     consume_events(1);
 }
 
+/**
+  * Reads the Timer1 register and updates the timestamp accordingly.
+  */
 void Timer1::read()
 {
     uint16_t counter = 0;
@@ -154,6 +157,11 @@ void Timer1::read()
     current_time_us += counter;
 }
 
+/**
+  * Sets the clock prescaler based on a given precision.
+  *
+  * @param precisionUs The precision in microseconds
+  */
 int Timer1::setClockSelect(uint64_t precisionUs)
 {
     // calculate a scaled minimum instruction time in nano seconds based on the CPU clock
@@ -185,13 +193,20 @@ int Timer1::setClockSelect(uint64_t precisionUs)
     return DEVICE_OK;
 }
 
+/**
+  * Constructor for an instance of Timer1.
+  *
+  * @param id The id to use for the message bus when transmitting events.
+  */
 Timer1::Timer1(uint16_t id)
 {
     this->id = timer_id = id;
     ins_frequency = 1000000 / ((uint32_t)F_CPU / 1000);
 }
 
-// prescaler set to 1, counter increments every 0.0625
+/**
+  * Initialises and starts this Timer1 instance
+  */
 int Timer1::init()
 {
     if(status & SYSTEM_CLOCK_INIT)
@@ -213,23 +228,73 @@ int Timer1::init()
     return DEVICE_OK;
 }
 
+/**
+  * Sets the current time tracked by this Timer1 instance
+  * in milliseconds
+  *
+  * @param timestamp the new time for this Timer1 instance in milliseconds
+  */
 int Timer1::setTime(uint64_t timestamp)
+{
+    return setTimeUs(timestamp * 1000);
+}
+
+/**
+  * Sets the current time tracked by this Timer1 instance
+  * in microseconds
+  *
+  * @param timestamp the new time for this Timer1 instance in microseconds
+  */
+int Timer1::setTimeUs(uint64_t timestamp)
 {
     current_time_us = timestamp;
     return DEVICE_OK;
 }
 
+/**
+  * Retrieves the current time tracked by this Timer1 instance
+  * in milliseconds
+  *
+  * @return the timestamp in milliseconds
+  */
 uint64_t Timer1::getTime()
 {
     return getTimeUs() / 1000;
 }
 
+/**
+  * Retrieves the current time tracked by this Timer1 instance
+  * in microseconds
+  *
+  * @return the timestamp in microseconds
+  */
 uint64_t Timer1::getTimeUs()
 {
     read();
     return current_time_us;
 }
 
+/**
+  * Configures this Timer1 instance to fire an event after period
+  * milliseconds.
+  *
+  * @param period the period to wait until an event is triggered, in milliseconds.
+  *
+  * @param value the value to place into the Events' value field.
+  */
+int Timer1::eventAfter(uint64_t interval, uint16_t value)
+{
+    return eventAfterUs(interval * 1000, value);
+}
+
+/**
+  * Configures this Timer1 instance to fire an event after period
+  * microseconds.
+  *
+  * @param period the period to wait until an event is triggered, in microseconds.
+  *
+  * @param value the value to place into the Events' value field.
+  */
 int Timer1::eventAfterUs(uint64_t interval, uint16_t value)
 {
     if(new ClockEvent(interval, value, &event_list))
@@ -238,11 +303,27 @@ int Timer1::eventAfterUs(uint64_t interval, uint16_t value)
     return DEVICE_NO_RESOURCES;
 }
 
-int Timer1::eventAfter(uint64_t interval, uint16_t value)
+/**
+  * Configures this Timer1 instance to fire an event every period
+  * milliseconds.
+  *
+  * @param period the period to wait until an event is triggered, in milliseconds.
+  *
+  * @param value the value to place into the Events' value field.
+  */
+int Timer1::eventEvery(uint64_t period, uint16_t value)
 {
-    return eventAfterUs(interval * 1000, value);
+    return eventEveryUs(period * 1000, value);
 }
 
+/**
+  * Configures this Timer1 instance to fire an event every period
+  * microseconds.
+  *
+  * @param period the period to wait until an event is triggered, in microseconds.
+  *
+  * @param value the value to place into the Events' value field.
+  */
 int Timer1::eventEveryUs(uint64_t period, uint16_t value)
 {
     ClockEvent* clk = new ClockEvent(period, value, &event_list, true);
@@ -260,11 +341,12 @@ int Timer1::eventEveryUs(uint64_t period, uint16_t value)
     return DEVICE_OK;
 }
 
-int Timer1::eventEvery(uint64_t period, uint16_t value)
-{
-    return eventEveryUs(period * 1000, value);
-}
-
+/**
+  * Start this Timer1 instance.
+  *
+  * @param precisionUs The precisions that the timer should use. Defaults to
+  *        TIMER_ONE_DEFAULT_PRECISION_US (1 us)
+  */
 int Timer1::start(uint64_t precisionUs)
 {
     TIMSK1 = _BV(TOIE1); // interrupt on overflow
@@ -300,6 +382,9 @@ int Timer1::start(uint64_t precisionUs)
     return DEVICE_OK;
 }
 
+/**
+  * Stop this Timer1 instance
+  */
 int Timer1::stop()
 {
     TIMSK1 &= ~_BV(TOIE1); // disable interrupt on overflow
