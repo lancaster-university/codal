@@ -1,6 +1,6 @@
 #include "Timer1.h"
 #include "DeviceEvent.h"
-#include "DeviceCompat.h"
+#include "CodalCompat.h"
 #include "DeviceSystemTimer.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>

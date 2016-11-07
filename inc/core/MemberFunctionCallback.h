@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
 
 #include "DeviceConfig.h"
 #include "DeviceEvent.h"
-#include "DeviceCompat.h"
+#include "CodalCompat.h"
 
 /**
   * Class definition for a MemberFunctionCallback.
