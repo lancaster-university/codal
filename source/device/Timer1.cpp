@@ -205,6 +205,14 @@ Timer1::Timer1(uint16_t id)
 }
 
 /**
+  * Returns the id for this timer instance
+  */
+int Timer1::getId()
+{
+    return this->id;
+}
+
+/**
   * Initialises and starts this Timer1 instance
   */
 int Timer1::init()

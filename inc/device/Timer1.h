@@ -27,6 +27,11 @@ public:
     Timer1(uint16_t id = DEVICE_ID_TIMER_1);
 
     /**
+      * Returns the id for this timer instance
+      */
+    int getId();
+
+    /**
       * Initialises and starts this Timer1 instance
       */
     int init();
