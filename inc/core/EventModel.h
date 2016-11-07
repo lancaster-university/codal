@@ -161,7 +161,7 @@ class EventModel
         if (handler == NULL)
             return DEVICE_INVALID_PARAMETER;
 
-        if(id == DEVICE_ID_SCHEDULER && value == DEVICE_EVT_ANY && flags != MESSAGE_BUS_LISTENER_IMMEDIATE)
+        if(id == DEVICE_ID_SCHEDULER && flags != MESSAGE_BUS_LISTENER_IMMEDIATE)
             return DEVICE_INVALID_PARAMETER;
 
         DeviceListener *newListener = new DeviceListener(id, value, handler, flags);
@@ -212,7 +212,7 @@ class EventModel
         if (handler == NULL)
             return DEVICE_INVALID_PARAMETER;
 
-        if(id == DEVICE_ID_SCHEDULER && value == DEVICE_EVT_ANY && flags != MESSAGE_BUS_LISTENER_IMMEDIATE)
+        if(id == DEVICE_ID_SCHEDULER && flags != MESSAGE_BUS_LISTENER_IMMEDIATE)
             return DEVICE_INVALID_PARAMETER;
 
         DeviceListener *newListener = new DeviceListener(id, value, handler, arg, flags);
@@ -469,7 +469,7 @@ int EventModel::listen(uint16_t id, uint16_t value, T* object, void (T::*handler
     if (object == NULL || handler == NULL)
         return DEVICE_INVALID_PARAMETER;
 
-    if(id == DEVICE_ID_SCHEDULER && value == DEVICE_EVT_ANY && flags != MESSAGE_BUS_LISTENER_IMMEDIATE)
+    if(id == DEVICE_ID_SCHEDULER && flags != MESSAGE_BUS_LISTENER_IMMEDIATE)
         return DEVICE_INVALID_PARAMETER;
 
 	DeviceListener *newListener = new DeviceListener(id, value, object, handler, flags);
