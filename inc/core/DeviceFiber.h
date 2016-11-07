@@ -42,13 +42,16 @@ DEALINGS IN THE SOFTWARE.
 #include "EventModel.h"
 
 // Fiber Scheduler Flags
-#define DEVICE_SCHEDULER_RUNNING	     	0x01
+#define DEVICE_SCHEDULER_RUNNING            0x01
+#define DEVICE_SCHEDULER_IDLE               0x02
 
 // Fiber Flags
-#define DEVICE_FIBER_FLAG_FOB             0x01
-#define DEVICE_FIBER_FLAG_PARENT          0x02
-#define DEVICE_FIBER_FLAG_CHILD           0x04
-#define DEVICE_FIBER_FLAG_DO_NOT_PAGE     0x08
+#define DEVICE_FIBER_FLAG_FOB               0x01
+#define DEVICE_FIBER_FLAG_PARENT            0x02
+#define DEVICE_FIBER_FLAG_CHILD             0x04
+#define DEVICE_FIBER_FLAG_DO_NOT_PAGE       0x08
+
+#define DEVICE_SCHEDULER_EVT_IDLE           1
 
 /**
   *  Thread Context for an ARM Cortex M0 core.
@@ -333,33 +336,6 @@ void idle();
   * This function typically calls idle().
   */
 void idle_task();
-
-/**
-  * Adds a component to the array of idle thread components, which are processed
-  * when the run queue is empty.
-  *
-  * @param component The component to add to the array.
-  * @return DEVICE_OK on success or DEVICE_NO_RESOURCES if the fiber components array is full.
-  */
-int fiber_add_idle_component(DeviceComponent *component);
-
-/**
-  * remove a component from the array of idle thread components
-  *
-  * @param component the component to remove from the idle component array.
-  * @return DEVICE_OK on success. DEVICE_INVALID_PARAMETER is returned if the given component has not been previously added.
-  */
-int fiber_remove_idle_component(DeviceComponent *component);
-
-/**
-  * Determines if the processor is executing in interrupt context.
-  *
-  * @return true if any the processor is currently executing any interrupt service routine. False otherwise.
-  */
-inline int inInterruptContext()
-{
-    return 0;//(((int)__get_IPSR()) & 0x003F) > 0;
-}
 
 /**
   * Assembler Context switch routing.
