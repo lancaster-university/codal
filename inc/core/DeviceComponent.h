@@ -97,23 +97,6 @@ class DeviceComponent
     }
 
     /**
-      * The system timer will call this member function once the component has been added to
-      * the array of system components using system_timer_add_component. This callback
-      * will be in interrupt context.
-      */
-    virtual void systemTick()
-    {
-    }
-
-    /**
-      * The idle thread will call this member function once the component has been added to the array
-      * of idle components using fiber_add_idle_component.
-      */
-    virtual void idleTick()
-    {
-    }
-
-    /**
       * If you have added your component to the idle or system tick component arrays,
       * you must remember to remove your component from them if your component is destructed.
       */

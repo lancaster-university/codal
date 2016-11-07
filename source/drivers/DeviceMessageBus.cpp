@@ -70,7 +70,8 @@ DeviceMessageBus::DeviceMessageBus(SystemClock& timer)
 
     clock.init();
 
-	//fiber_add_idle_component(this);
+    // ANY listeners for scheduler events MUST be immediate, or else they will not be registered.
+	listen(DEVICE_ID_SCHEDULER, DEVICE_SCHEDULER_EVT_IDLE, this, &DeviceMessageBus::idle, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
 	if(EventModel::defaultEventBus == NULL)
 		EventModel::defaultEventBus = this;
@@ -117,30 +118,15 @@ void async_callback(void *param)
     {
         // Firstly, check for a method callback into an object.
         if (listener->flags & MESSAGE_BUS_LISTENER_METHOD)
-        {
-            //Serial.println("ME");
             listener->cb_method->fire(listener->evt);
-        }
-
 
         // Now a parameterised C function
         else if (listener->flags & MESSAGE_BUS_LISTENER_PARAMETERISED)
-        {
-            //Serial.println("PA");
             listener->cb_param(listener->evt, listener->cb_arg);
-        }
-
 
         // We must have a plain C function
         else
-        {
-            //Serial.println("CF");
-            //while (!(UCSR0A & _BV(TXC0)));
             listener->cb(listener->evt);
-
-            //Serial.println("AFT");
-            //while (!(UCSR0A & _BV(TXC0)));
-        }
 
 
         // If there are more events to process, dequeue the next one and process it.
@@ -290,7 +276,7 @@ int DeviceMessageBus::deleteMarkedListeners()
   * Process at least one event from the event queue, if it is not empty.
   * We then continue processing events until something appears on the runqueue.
   */
-void DeviceMessageBus::idleTick(DeviceEvent)
+void DeviceMessageBus::idle(DeviceEvent)
 {
     // Clear out any listeners marked for deletion
     this->deleteMarkedListeners();
@@ -314,9 +300,6 @@ void DeviceMessageBus::idleTick(DeviceEvent)
 
         // Pull the next event to process, if there is one.
         item = this->dequeueEvent();
-
-        //Serial.println("COMP");
-        //while (!(UCSR0A & _BV(TXC0)));
     }
 }
 
@@ -725,5 +708,5 @@ DeviceListener* DeviceMessageBus::elementAt(int n)
   */
 DeviceMessageBus::~DeviceMessageBus()
 {
-    ignore(DEVICE_ID_SCHEDULER, DEVICE_EVT_ANY, this, &DeviceMessageBus::idleTick);
+    ignore(DEVICE_ID_SCHEDULER, DEVICE_EVT_ANY, this, &DeviceMessageBus::idle);
 }
