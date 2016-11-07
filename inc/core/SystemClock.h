@@ -7,8 +7,6 @@
 #include "list.h"
 #include "ErrorNo.h"
 
-#include "Arduino.h"
-
 #define SYSTEM_CLOCK_INIT 0x01
 
 struct ClockEvent
