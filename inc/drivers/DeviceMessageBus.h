@@ -211,7 +211,7 @@ class DeviceMessageBus : public EventModel, public DeviceComponent
       * Process at least one event from the event queue, if it is not empty.
       * We then continue processing events until something appears on the runqueue.
       */
-    virtual void idleTick();
+    virtual void idleTick(DeviceEvent);
 };
 
 #endif

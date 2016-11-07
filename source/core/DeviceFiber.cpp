@@ -38,8 +38,6 @@ DEALINGS IN THE SOFTWARE.
 #include <avr/sleep.h>
 #include <util/delay.h>
 
-#include <Arduino.h>
-
 inline uint8_t high(uint16_t val)
 {
     return val >> 8;
@@ -54,34 +52,6 @@ void delay_ms(uint16_t count)
 {
     while(count--)
         _delay_ms(1);
-}
-
-void print_fiber(Fiber* f)
-{
-    Serial.println("______________________");
-    /*for(int i = 0; i < 32; i++)
-    {
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(f->tcb.R[i]);
-    }*/
-    Serial.print("SP: ");
-    uint16_t stack_pointer = f->tcb.SPHI << 8 | f->tcb.SPLO;
-    Serial.println(stack_pointer);
-    //Serial.println(f->tcb.SPLO);
-    //Serial.print("STBA: ");
-    //Serial.println(f->tcb.stack_base);
-    Serial.print("LR: ");
-    Serial.println(f->tcb.lr);
-
-    Serial.print("SB: ");
-    Serial.println(f->stack_bottom);
-    Serial.print("ST: ");
-    Serial.println(f->stack_top);
-    Serial.print("BFS: ");
-    Serial.println(f->stack_top - f->stack_bottom);
-    Serial.print("RE: ");
-    Serial.println(RAMEND);
 }
 
 /*
@@ -105,14 +75,10 @@ static Fiber *fiberPool = NULL;                    // Pool of unused fibers, jus
  */
 static uint8_t fiber_flags = 0;
 
-
 /*
  * Fibers may perform wait/notify semantics on events. If set, these operations will be permitted on this EventModel.
  */
 static EventModel *messageBus = NULL;
-
-// Array of components which are iterated during idle thread execution.
-static DeviceComponent* idleThreadComponents[DEVICE_IDLE_COMPONENTS];
 
 /**
   * Utility function to add the currenty running fiber to the given queue.
@@ -207,8 +173,6 @@ Fiber *getFiberContext()
 
         if (f == NULL)
             return NULL;
-
-        memset(f, 0, sizeof(Fiber));
 
         f->stack_bottom = 0;
         f->stack_top = 0;
@@ -647,18 +611,12 @@ int invoke(void (*entry_fn)(void *), void *param)
  */
 void launch_new_fiber(void (*ep)(void), void (*cp)(void))
 {
-    Serial.println("LAUNCH");
-    while (!(UCSR0A & _BV(TXC0)));
-
     // Execute the thread's entrypoint
     ep();
 
-    Serial.println("A EP");
-    while (!(UCSR0A & _BV(TXC0)));
     // Execute the thread's completion routine;
     cp();
 
-    Serial.println("A CP");
     // If we get here, then the completion routine didn't recycle the fiber... so do it anyway. :-)
     release_fiber();
 }
@@ -691,8 +649,6 @@ Fiber *__create_fiber(uint32_t ep, uint32_t cp, uint32_t pm, int parameterised)
     if (ep == 0 || cp == 0)
         return NULL;
 
-    Serial.println("VALID");
-
     // Allocate a TCB from the new fiber. This will come from the fiber pool if availiable,
     // else a new one will be allocated on the heap.
     Fiber *newFiber = getFiberContext();
@@ -710,20 +666,14 @@ Fiber *__create_fiber(uint32_t ep, uint32_t cp, uint32_t pm, int parameterised)
     newFiber->tcb.R24 = low(ep);
     newFiber->tcb.R25 = high(ep);
 
-    Serial.println("conf");
-
     // Set the stack and assign the link register to refer to the appropriate entry point wrapper.
     newFiber->tcb.SPHI = high(RAMEND - 0x02);
     newFiber->tcb.SPLO = low(RAMEND - 0x02);
 
     newFiber->tcb.lr = parameterised ? (uint16_t) &launch_new_fiber_param : (uint16_t) &launch_new_fiber;
 
-    Serial.println("ret set");
-
     // Add new fiber to the run queue.
     queue_fiber(newFiber, &runQueue);
-
-    Serial.println("queued");
 
     return newFiber;
 }
@@ -819,23 +769,11 @@ void verify_stack_size(Fiber *f)
     uint16_t stack_pointer = SPH << 8 | SPL;
     stack_pointer -= 17;
 
-    /*Serial.print("launch_n_f: ");
-    Serial.println((int)&launch_new_fiber);
-
-    Serial.print("VF SP: ");
-    Serial.println(stack_pointer);*/
-
     // Calculate the stack depth.
     stackDepth = RAMEND - stack_pointer;
 
     // Calculate the size of our allocated stack buffer
     bufferSize = f->stack_top - f->stack_bottom;
-
-    /*Serial.print("VF SD: ");
-    Serial.println(stackDepth);
-
-    Serial.print("VF BS: ");
-    Serial.println(bufferSize);*/
 
     // If we're too small, increase our buffer size.
     if (bufferSize < stackDepth)
@@ -855,11 +793,6 @@ void verify_stack_size(Fiber *f)
 
         // Recalculate where the top of the stack is and we're done.
         f->stack_top = f->stack_bottom + bufferSize;
-
-        /*Serial.print("VF SB: ");
-        Serial.println(f->stack_bottom);
-        Serial.print("VF ST: ");
-        Serial.println(f->stack_top);*/
     }
 }
 
@@ -882,9 +815,6 @@ void schedule()
 {
     if (!fiber_scheduler_running())
         return;
-
-    //Serial.println("SCHED");
-    //while (!(UCSR0A & _BV(TXC0)));
 
     // First, take a reference to the currently running fiber;
     Fiber *oldFiber = currentFiber;
@@ -969,8 +899,6 @@ void schedule()
 
         if (oldFiber == idleFiber)
         {
-            //Serial.println("SW1");
-            //while (!(UCSR0A & _BV(TXC0)));
             // Just swap in the new fiber, and discard changes to stack and register context.
             swap_context(NULL, &currentFiber->tcb, (uint16_t)0, (uint16_t)currentFiber->stack_top);
         }
@@ -978,65 +906,11 @@ void schedule()
         {
             // Ensure the stack allocation of the fiber being scheduled out is large enough
             verify_stack_size(oldFiber);
-            /*Serial.println("______________________");
-            Serial.println("Old Fiber");
-            print_fiber(oldFiber);
-            Serial.println("______________________");
-            Serial.println("New Fiber");
-            print_fiber(currentFiber);
 
-            Serial.println("SW2");
-            while (!(UCSR0A & _BV(TXC0)));*/
             // Schedule in the new fiber.
             swap_context(&oldFiber->tcb, &currentFiber->tcb, (uint16_t)oldFiber->stack_top, (uint16_t)currentFiber->stack_top);
-
-            //Serial.println("AFT");
-            //while (!(UCSR0A & _BV(TXC0)));
         }
     }
-}
-
-/**
-  * Adds a component to the array of idle thread components, which are processed
-  * when the run queue is empty.
-  *
-  * @param component The component to add to the array.
-  * @return DEVICE_OK on success or DEVICE_NO_RESOURCES if the fiber components array is full.
-  */
-int fiber_add_idle_component(DeviceComponent *component)
-{
-    int i = 0;
-
-    while(idleThreadComponents[i] != NULL && i < DEVICE_IDLE_COMPONENTS)
-        i++;
-
-    if(i == DEVICE_IDLE_COMPONENTS)
-        return DEVICE_NO_RESOURCES;
-
-    idleThreadComponents[i] = component;
-
-    return DEVICE_OK;
-}
-
-/**
-  * remove a component from the array of idle thread components
-  *
-  * @param component the component to remove from the idle component array.
-  * @return DEVICE_OK on success. DEVICE_INVALID_PARAMETER is returned if the given component has not been previously added.
-  */
-int fiber_remove_idle_component(DeviceComponent *component)
-{
-    int i = 0;
-
-    while(idleThreadComponents[i] != component && i < DEVICE_IDLE_COMPONENTS)
-        i++;
-
-    if(i == DEVICE_IDLE_COMPONENTS)
-        return DEVICE_INVALID_PARAMETER;
-
-    idleThreadComponents[i] = NULL;
-
-    return DEVICE_OK;
 }
 
 /**
@@ -1045,11 +919,6 @@ int fiber_remove_idle_component(DeviceComponent *component)
   */
 void idle()
 {
-    // Service background tasks
-    /*for(int i = 0; i < DEVICE_IDLE_COMPONENTS; i++)
-        if(idleThreadComponents[i] != NULL)
-            idleThreadComponents[i]->idleTick();*/
-
     // If the above did create any useful work, enter power efficient sleep.
     if(scheduler_runqueue_empty())
     {

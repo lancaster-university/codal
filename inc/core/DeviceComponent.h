@@ -43,6 +43,7 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_ID_SERIAL              12
 #define DEVICE_ID_GESTURE             13
 #define DEVICE_ID_TIMER_1             14
+#define DEVICE_ID_SCHEDULER           15
 
 #define DEVICE_ID_IO_P0               100                       // IDs 100-227 are reserved for I/O Pin IDs.
 

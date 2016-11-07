@@ -140,24 +140,6 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 //
-// Core codal device services
-//
-
-// To reduce memory cost and complexity, the codal device allows components to register for
-// periodic callback events during interrupt context, which occur every scheduling quantum (FIBER_TICK_PERIOD_MS)
-// This defines the maximum size of interrupt callback list.
-#ifndef DEVICE_SYSTEM_COMPONENTS
-#define DEVICE_SYSTEM_COMPONENTS              10
-#endif
-
-// To reduce memory cost and complexity, the codal device allows components to register for
-// periodic callback events when the processor is idle.
-// This defines the maximum size of the idle callback list.
-#ifndef DEVICE_IDLE_COMPONENTS
-#define DEVICE_IDLE_COMPONENTS                6
-#endif
-
-//
 // BLE options
 //
 // The BLE stack is very memory hungry. Each service can therefore be compiled in or out

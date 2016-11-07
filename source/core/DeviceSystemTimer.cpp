@@ -38,9 +38,6 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceSystemTimer.h"
 #include "ErrorNo.h"
 
-// Array of components which are iterated during a system tick
-static DeviceComponent* systemTickComponents[DEVICE_SYSTEM_COMPONENTS];
-
 // System timer.
 static SystemClock* clock = NULL;
 

@@ -290,7 +290,7 @@ int DeviceMessageBus::deleteMarkedListeners()
   * Process at least one event from the event queue, if it is not empty.
   * We then continue processing events until something appears on the runqueue.
   */
-void DeviceMessageBus::idleTick()
+void DeviceMessageBus::idleTick(DeviceEvent)
 {
     // Clear out any listeners marked for deletion
     this->deleteMarkedListeners();
@@ -725,5 +725,5 @@ DeviceListener* DeviceMessageBus::elementAt(int n)
   */
 DeviceMessageBus::~DeviceMessageBus()
 {
-    fiber_remove_idle_component(this);
+    ignore(DEVICE_ID_SCHEDULER, DEVICE_EVT_ANY, this, &DeviceMessageBus::idleTick);
 }
