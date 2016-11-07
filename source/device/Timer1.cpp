@@ -11,7 +11,7 @@ static ClockPrescalerConfig* clock_configuration = NULL;
 static uint32_t overflow_period = 0;
 static uint16_t timer_id = 0;
 
-static uint32_t ins_frequency = 0;
+static uint32_t clock_frequency = 0;
 
 const static ClockPrescalerConfig Timer1Prescalers[TIMER_ONE_PRESCALER_OPTIONS] = {
     {1, _BV(CS10)},
@@ -36,7 +36,7 @@ void set_interrupt(uint32_t time_us)
     uint16_t counter = 0;
 
     // calculate the timer value based on a number
-    uint32_t tick_time = ins_frequency * clock_configuration->prescaleValue;
+    uint32_t tick_time = clock_frequency * clock_configuration->prescaleValue;
 
     uint16_t new_value = (time_us * 1000) / tick_time;
 
@@ -107,7 +107,7 @@ void consume_events(uint8_t compareEvent)
         if(!interrupt_set && tmp->countUs < overflow_period)
         {
             // calculate the timer value based on timestamp us
-            uint32_t tickTime = ins_frequency * clock_configuration->prescaleValue;
+            uint32_t tickTime = clock_frequency * clock_configuration->prescaleValue;
 
             OCR1A = (uint16_t)((uint32_t)(tmp->countUs * 1000) / tickTime);
             TIMSK1 |= _BV(OCIE1A);
@@ -150,7 +150,7 @@ void Timer1::read()
     else
     {
         // scale our instruction time based on our current prescaler
-        uint32_t tickTime = ins_frequency * clock_configuration->prescaleValue;
+        uint32_t tickTime = clock_frequency * clock_configuration->prescaleValue;
         counter = (tickTime * counter) / 1000;
     }
 
@@ -164,8 +164,6 @@ void Timer1::read()
   */
 int Timer1::setClockSelect(uint64_t precisionUs)
 {
-    // calculate a scaled minimum instruction time in nano seconds based on the CPU clock
-    uint32_t ns = 1000000 / ((uint32_t)F_CPU / 1000);
     uint32_t timePerTick = 0;
 
     precisionUs *= 1000;
@@ -176,15 +174,15 @@ int Timer1::setClockSelect(uint64_t precisionUs)
     for(uint8_t i = TIMER_ONE_PRESCALER_OPTIONS - 1; i >= 0; i--)
     {
         // timer per tick = (prescale) * ( 1 / frequency)
-        timePerTick = clock_configuration->prescaleValue * ns;
+        timePerTick = clock_configuration->prescaleValue * clock_frequency;
 
-        if(timePerTick < precisionUs)
+        if(timePerTick <= precisionUs)
             break;
 
         clock_configuration = (ClockPrescalerConfig*)&Timer1Prescalers[i];
     }
 
-    uint32_t timerTickNs = ns * clock_configuration->prescaleValue;
+    uint32_t timerTickNs = clock_frequency * clock_configuration->prescaleValue;
 
     overflow_period = ((TIMER_1_MAX - 1) * timerTickNs) / 1000;
 
@@ -201,7 +199,7 @@ int Timer1::setClockSelect(uint64_t precisionUs)
 Timer1::Timer1(uint16_t id)
 {
     this->id = timer_id = id;
-    ins_frequency = 1000000 / ((uint32_t)F_CPU / 1000);
+    clock_frequency = 1000000 / ((uint32_t)F_CPU / 1000);
 }
 
 /**
@@ -368,22 +366,6 @@ int Timer1::start(uint64_t precisionUs)
 
     TCCR1B &= ~(_BV(CS10) | _BV(CS11) | _BV(CS12));
     TCCR1B = (uint8_t)clock_configuration->register_config;
-
-    // this is apparently a well known bug, where we could receive a phantom interrupt
-    // as if the timer has ticked for the correct duration.
-    // we essentially spin until the timer has ticked
-    uint16_t counter = 0;
-
-    // we previously set the TCNT1 reg to 0, so if it hasn't ticked, it will still
-    // be zero
-    do
-    {
-        sreg = SREG;
-        __disable_irq();
-
-        counter = TCNT1;
-        SREG = sreg;
-    } while (counter == 0);
 
     __enable_irq();
 
