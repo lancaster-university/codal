@@ -33,6 +33,8 @@ DEALINGS IN THE SOFTWARE.
 
 #include "DeviceConfig.h"
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
+#include <util/delay.h>
 
 #ifndef PI
 #define PI 3.14159265359
@@ -97,19 +99,65 @@ inline bool isdigit(char c)
 }
 #endif
 
-#ifndef __enable_irq
+/**
+  * enables interrupts
+  */
 inline void __enable_irq()
 {
     sei();
 }
-#endif
 
-#ifndef __disable_irq
+/**
+  * Disable interrupts
+  */
 inline void __disable_irq()
 {
     cli();
 }
+
+inline void __WFE()
+{
+    __disable_irq();
+    sleep_enable();
+    __enable_irq();
+    sleep_cpu();
+    sleep_disable();
+}
+
+inline void wait_ms(uint16_t count)
+{
+    while(count--)
+        _delay_ms(1);
+}
+
+/**
+  * Extracts the upper 8 bits of a 16 bit integer
+  *
+  * @param val the 16 bit value.
+  *
+  * @return the upper 8 bits of the given val.
+  */
+#ifndef high
+inline uint8_t high(uint16_t val)
+{
+    return val >> 8;
+}
 #endif
+
+/**
+  * Extracts the lower 8 bits of a 16 bit integer
+  *
+  * @param val the 16 bit value.
+  *
+  * @return the lower 8 bits of the given val.
+  */
+#ifndef low
+inline uint8_t low(uint16_t val)
+{
+    return val & 0xFF;
+}
+#endif
+
 
 /**
   * Performs an in buffer reverse of a given char array.

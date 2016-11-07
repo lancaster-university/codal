@@ -35,24 +35,6 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceFiber.h"
 #include "DeviceSystemTimer.h"
 #include <avr/interrupt.h>
-#include <avr/sleep.h>
-#include <util/delay.h>
-
-inline uint8_t high(uint16_t val)
-{
-    return val >> 8;
-}
-
-inline uint8_t low(uint16_t val)
-{
-    return val & 0xFF;
-}
-
-void delay_ms(uint16_t count)
-{
-    while(count--)
-        _delay_ms(1);
-}
 
 /*
  * Statically allocated values used to create and destroy Fibers.
@@ -351,7 +333,7 @@ void fiber_sleep(unsigned long t)
     // If the scheduler is not running, then simply perform a spin wait and exit.
     if (!fiber_scheduler_running())
     {
-        delay_ms(t);
+        wait_ms(t);
         return;
     }
 
@@ -919,14 +901,24 @@ void schedule()
   */
 void idle()
 {
+    // Prevent an idle loop of death:
+    // We will return to idle after processing any idle events that add anything
+    // to our run queue, we use the DEVICE_SCHEDULER_IDLE flag to determine this
+    // scenario.
+    if(!(fiber_flags & DEVICE_SCHEDULER_IDLE))
+    {
+        fiber_flags |= DEVICE_SCHEDULER_IDLE;
+        DeviceEvent(DEVICE_ID_SCHEDULER, DEVICE_SCHEDULER_EVT_IDLE);
+    }
+
     // If the above did create any useful work, enter power efficient sleep.
     if(scheduler_runqueue_empty())
     {
-        __disable_irq();
-        sleep_enable();
-        __enable_irq();
-        sleep_cpu();
-        sleep_disable();
+        // unset our DEVICE_SCHEDULER_IDLE flag, we have processed all of the events
+        // because we enforce MESSAGE_BUS_LISTENER_IMMEDIATE for listeners placed
+        // on the scheduler.
+        fiber_flags &= ~DEVICE_SCHEDULER_IDLE;
+        __WFE();
     }
 }
 
