@@ -23,18 +23,6 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
-/**
-  * Definitions for the Device system timer.
-  *
-  * This module provides:
-  *
-  * 1) a concept of global system time since power up
-  * 2) a simple periodic multiplexing API for the underlying mbed implementation.
-  *
-  * The latter is useful to avoid costs associated with multiple mbed Ticker instances
-  * in codal components, as each incurs a significant additional RAM overhead (circa 80 bytes).
-  */
-
 #ifndef DEVICE_SYSTEM_TIMER_H
 #define DEVICE_SYSTEM_TIMER_H
 
