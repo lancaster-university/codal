@@ -763,9 +763,6 @@ void verify_stack_size(Fiber *f)
         // To ease heap churn, we choose the next largest multple of 32 bytes.
         bufferSize = (stackDepth + 32) & 0xffffffe0;
 
-        //Serial.print("VF NEW: ");
-        //Serial.println(bufferSize);
-
         // Release the old memory
         if (f->stack_bottom != 0)
             free((void *)f->stack_bottom);

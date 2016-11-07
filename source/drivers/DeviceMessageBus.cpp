@@ -52,8 +52,6 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceFiber.h"
 #include "ErrorNo.h"
 
-#include "Arduino.h"
-
 /**
   * Default constructor.
   *
@@ -71,7 +69,7 @@ DeviceMessageBus::DeviceMessageBus(SystemClock& timer)
     clock.init();
 
     // ANY listeners for scheduler events MUST be immediate, or else they will not be registered.
-	listen(DEVICE_ID_SCHEDULER, DEVICE_SCHEDULER_EVT_IDLE, this, &DeviceMessageBus::idle, MESSAGE_BUS_LISTENER_IMMEDIATE);
+    listen(DEVICE_ID_SCHEDULER, DEVICE_SCHEDULER_EVT_IDLE, this, &DeviceMessageBus::idle, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
 	if(EventModel::defaultEventBus == NULL)
 		EventModel::defaultEventBus = this;
@@ -86,8 +84,6 @@ DeviceMessageBus::DeviceMessageBus(SystemClock& timer)
 void async_callback(void *param)
 {
 	DeviceListener *listener = (DeviceListener *)param;
-
-    //Serial.println("CB");
 
     // OK, now we need to decide how to behave depending on our configuration.
     // If this a fiber f already active within this listener then check our
