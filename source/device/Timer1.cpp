@@ -69,9 +69,6 @@ void consume_events(uint8_t compareEvent)
     {
         tmp = list_entry(iter, ClockEvent, list);
 
-        //Serial.print("T: ");
-        //Serial.println((uint32_t)tmp->countUs);
-
         // if we have received a compare event, we know we will be ripping off the top!
         if(first && compareEvent)
         {
@@ -89,16 +86,16 @@ void consume_events(uint8_t compareEvent)
             list_del(iter);
 
             // if this event is repeating, reset our timestamp
-            if(tmp->period > 0)
+            if(tmp->period == 0)
+            {
+                delete tmp;
+                continue;
+            }
+            else
             {
                 // update our count, and readd to our event list
                 tmp->countUs = tmp->period;
                 tmp->addToList(&event_list);
-            }
-            else
-            {
-                delete tmp;
-                continue;
             }
         }
         else
