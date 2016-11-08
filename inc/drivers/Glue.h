@@ -35,7 +35,7 @@ DEALINGS IN THE SOFTWARE.
 //
 
 //
-// Explicitly disable ADC behaviour. 
+// Explicitly disable ADC behaviour.
 // known uses: nrf51822 PAN 3, details of which can be found here: https://www.nordicsemi.com/eng/nordic/download_resource/24634/5/88440387
 //
 void analogin_disable() __attribute__((weak));

@@ -24,7 +24,7 @@ DEALINGS IN THE SOFTWARE.
 */
 
 /**
-  *	This structure defines a DeviceListener used to invoke functions, or member
+  * This structure defines a DeviceListener used to invoke functions, or member
   * functions if an instance of EventModel receives an event whose id and value
   * match this DeviceListener's id and value.
   */
@@ -47,12 +47,12 @@ DEALINGS IN THE SOFTWARE.
   */
 DeviceListener::DeviceListener(uint16_t id, uint16_t value, void (*handler)(DeviceEvent), uint16_t flags)
 {
-	this->id = id;
-	this->value = value;
-	this->cb = handler;
-	this->cb_arg = NULL;
+    this->id = id;
+    this->value = value;
+    this->cb = handler;
+    this->cb_arg = NULL;
     this->flags = flags;
-	this->next = NULL;
+    this->next = NULL;
     this->evt_queue = NULL;
 }
 
@@ -75,12 +75,12 @@ DeviceListener::DeviceListener(uint16_t id, uint16_t value, void (*handler)(Devi
   */
 DeviceListener::DeviceListener(uint16_t id, uint16_t value, void (*handler)(DeviceEvent, void *), void* arg, uint16_t flags)
 {
-	this->id = id;
-	this->value = value;
-	this->cb_param = handler;
-	this->cb_arg = arg;
+    this->id = id;
+    this->value = value;
+    this->cb_param = handler;
+    this->cb_arg = arg;
     this->flags = flags | MESSAGE_BUS_LISTENER_PARAMETERISED;
-	this->next = NULL;
+    this->next = NULL;
     this->evt_queue = NULL;
 }
 

@@ -33,7 +33,7 @@ DEALINGS IN THE SOFTWARE.
   * Class definition for CodalDevice.
   *
   * All devices should inherit from this class, and override any of the methods below
-  * to provide define core functionality needed by codal. 
+  * to provide define core functionality needed by codal.
   *
   */
 class CodalDevice
@@ -69,7 +69,7 @@ class CodalDevice
     }
 
     /**
-      * Determines a unique 32 bit ID for this device, if provided by the hardware. 
+      * Determines a unique 32 bit ID for this device, if provided by the hardware.
       * default: 0.
       * @return A 32 bit unique identifier.
       */
@@ -84,10 +84,10 @@ class CodalDevice
      */
     virtual void panic(int statusCode)
     {
-        __disable_irq(); 
+        __disable_irq();
 
-        Serial pc(USBTX, USBRX); 
-        while(1) 
+        Serial pc(USBTX, USBRX);
+        while(1)
         {
             pc.printf("*** CODAL PANIC : [%.3d]\n", statusCode);
             wait_ms(500);

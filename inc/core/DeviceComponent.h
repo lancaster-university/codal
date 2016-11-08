@@ -52,7 +52,7 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_ID_NOTIFY                          1023          // Notfication channel, for general purpose synchronisation
 
 // Universal flags used as part of the status field
-#define DEVICE_COMPONENT_RUNNING		0x01
+#define DEVICE_COMPONENT_RUNNING        0x01
 
 
 /**

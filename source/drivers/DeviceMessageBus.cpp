@@ -61,7 +61,7 @@ DEALINGS IN THE SOFTWARE.
 DeviceMessageBus::DeviceMessageBus(SystemClock& timer)
 : clock(timer)
 {
-	this->listeners = NULL;
+    this->listeners = NULL;
     this->evt_queue_head = NULL;
     this->evt_queue_tail = NULL;
     this->queueLength = 0;
@@ -71,8 +71,8 @@ DeviceMessageBus::DeviceMessageBus(SystemClock& timer)
     // ANY listeners for scheduler events MUST be immediate, or else they will not be registered.
     listen(DEVICE_ID_SCHEDULER, DEVICE_SCHEDULER_EVT_IDLE, this, &DeviceMessageBus::idle, MESSAGE_BUS_LISTENER_IMMEDIATE);
 
-	if(EventModel::defaultEventBus == NULL)
-		EventModel::defaultEventBus = this;
+    if(EventModel::defaultEventBus == NULL)
+        EventModel::defaultEventBus = this;
 }
 
 /**
@@ -83,7 +83,7 @@ DeviceMessageBus::DeviceMessageBus(SystemClock& timer)
   */
 void async_callback(void *param)
 {
-	DeviceListener *listener = (DeviceListener *)param;
+    DeviceListener *listener = (DeviceListener *)param;
 
     // OK, now we need to decide how to behave depending on our configuration.
     // If this a fiber f already active within this listener then check our
@@ -233,11 +233,11 @@ DeviceEventQueueItem* DeviceMessageBus::dequeueEvent()
   */
 int DeviceMessageBus::deleteMarkedListeners()
 {
-	DeviceListener *l, *p;
+    DeviceListener *l, *p;
     int removed = 0;
 
-	l = listeners;
-	p = NULL;
+    l = listeners;
+    p = NULL;
 
     // Walk this list of event handlers. Delete any that match the given listener.
     while (l != NULL)
@@ -352,7 +352,7 @@ int DeviceMessageBus::process(DeviceEvent &evt, bool urgent)
 
     while (l != NULL)
     {
-	    if((l->id == evt.source || l->id == DEVICE_ID_ANY) && (l->value == evt.value || l->value == DEVICE_EVT_ANY))
+        if((l->id == evt.source || l->id == DEVICE_ID_ANY) && (l->value == evt.value || l->value == DEVICE_EVT_ANY))
         {
             // If we're running under the fiber scheduler, then derive the THREADING_MODE for the callback based on the
             // metadata in the listener itself.
@@ -398,17 +398,17 @@ int DeviceMessageBus::process(DeviceEvent &evt, bool urgent)
   */
 int DeviceMessageBus::add(DeviceListener *newListener)
 {
-	DeviceListener *l, *p;
+    DeviceListener *l, *p;
     int methodCallback;
 
-	//handler can't be NULL!
-	if (newListener == NULL)
-		return DEVICE_INVALID_PARAMETER;
+    //handler can't be NULL!
+    if (newListener == NULL)
+        return DEVICE_INVALID_PARAMETER;
 
-	l = listeners;
+    l = listeners;
 
-	// Firstly, we treat a listener as an idempotent operation. Ensure we don't already have this handler
-	// registered in a that will already capture these events. If we do, silently ignore.
+    // Firstly, we treat a listener as an idempotent operation. Ensure we don't already have this handler
+    // registered in a that will already capture these events. If we do, silently ignore.
 
     // We always check the ID, VALUE and CB_METHOD fields.
     // If we have a callback to a method, check the cb_method class. Otherwise, the cb function point is sufficient.
@@ -431,50 +431,50 @@ int DeviceMessageBus::add(DeviceListener *newListener)
     }
 
     // We have a valid, new event handler. Add it to the list.
-	// if listeners is null - we can automatically add this listener to the list at the beginning...
-	if (listeners == NULL)
-	{
-		listeners = newListener;
+    // if listeners is null - we can automatically add this listener to the list at the beginning...
+    if (listeners == NULL)
+    {
+        listeners = newListener;
         DeviceEvent(DEVICE_ID_MESSAGE_BUS_LISTENER, newListener->id);
 
-		return DEVICE_OK;
-	}
+        return DEVICE_OK;
+    }
 
-	// We maintain an ordered list of listeners.
-	// The chain is held stictly in increasing order of ID (first level), then value code (second level).
-	// Find the correct point in the chain for this event.
-	// Adding a listener is a rare occurance, so we just walk the list...
+    // We maintain an ordered list of listeners.
+    // The chain is held stictly in increasing order of ID (first level), then value code (second level).
+    // Find the correct point in the chain for this event.
+    // Adding a listener is a rare occurance, so we just walk the list...
 
-	p = listeners;
-	l = listeners;
+    p = listeners;
+    l = listeners;
 
-	while (l != NULL && l->id < newListener->id)
-	{
-		p = l;
-		l = l->next;
-	}
+    while (l != NULL && l->id < newListener->id)
+    {
+        p = l;
+        l = l->next;
+    }
 
-	while (l != NULL && l->id == newListener->id && l->value < newListener->value)
-	{
-		p = l;
-		l = l->next;
-	}
+    while (l != NULL && l->id == newListener->id && l->value < newListener->value)
+    {
+        p = l;
+        l = l->next;
+    }
 
-	//add at front of list
-	if (p == listeners && (newListener->id < p->id || (p->id == newListener->id && p->value > newListener->value)))
-	{
-		newListener->next = p;
+    //add at front of list
+    if (p == listeners && (newListener->id < p->id || (p->id == newListener->id && p->value > newListener->value)))
+    {
+        newListener->next = p;
 
-		//this new listener is now the front!
-		listeners = newListener;
-	}
+        //this new listener is now the front!
+        listeners = newListener;
+    }
 
-	//add after p
-	else
-	{
-		newListener->next = p->next;
-		p->next = newListener;
-	}
+    //add after p
+    else
+    {
+        newListener->next = p->next;
+        p->next = newListener;
+    }
 
     DeviceEvent(DEVICE_ID_MESSAGE_BUS_LISTENER, newListener->id);
     return DEVICE_OK;
@@ -489,14 +489,14 @@ int DeviceMessageBus::add(DeviceListener *newListener)
   */
 int DeviceMessageBus::remove(DeviceListener *listener)
 {
-	DeviceListener *l;
+    DeviceListener *l;
     int removed = 0;
 
-	//handler can't be NULL!
-	if (listener == NULL)
-		return DEVICE_INVALID_PARAMETER;
+    //handler can't be NULL!
+    if (listener == NULL)
+        return DEVICE_INVALID_PARAMETER;
 
-	l = listeners;
+    l = listeners;
 
     // Walk this list of event handlers. Delete any that match the given listener.
     while (l != NULL)

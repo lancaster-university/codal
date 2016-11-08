@@ -87,7 +87,7 @@ DeviceFont::DeviceFont()
   */
 void DeviceFont::setSystemFont(DeviceFont font)
 {
-	DeviceFont::systemFont = font;
+    DeviceFont::systemFont = font;
 }
 
 /**

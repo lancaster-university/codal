@@ -57,7 +57,7 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_MAXIMUM_HEAPS          2
 
 // Flag to indicate that a given block is FREE/USED
-#define DEVICE_HEAP_BLOCK_FREE		0x80000000
+#define DEVICE_HEAP_BLOCK_FREE      0x80000000
 
 /**
   * Create and initialise a given memory region as for heap storage.

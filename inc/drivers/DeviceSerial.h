@@ -45,8 +45,8 @@ DEALINGS IN THE SOFTWARE.
 enum DeviceSerialMode
 {
     ASYNC,
-	SYNC_SPINWAIT,
-	SYNC_SLEEP
+    SYNC_SPINWAIT,
+    SYNC_SLEEP
 };
 
 /**

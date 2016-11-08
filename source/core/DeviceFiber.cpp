@@ -214,7 +214,7 @@ void scheduler_init(EventModel &_messageBus)
         messageBus->every(SCHEDULER_TICK_PERIOD_MS, scheduler_tick, MESSAGE_BUS_LISTENER_IMMEDIATE);
     }
 
-	fiber_flags |= DEVICE_SCHEDULER_RUNNING;
+    fiber_flags |= DEVICE_SCHEDULER_RUNNING;
 }
 
 /**
@@ -224,10 +224,10 @@ void scheduler_init(EventModel &_messageBus)
   */
 int fiber_scheduler_running()
 {
-	if (fiber_flags & DEVICE_SCHEDULER_RUNNING)
-		return 1;
+    if (fiber_flags & DEVICE_SCHEDULER_RUNNING)
+        return 1;
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -272,11 +272,11 @@ void scheduler_event(DeviceEvent evt)
     Fiber *t;
     int notifyOneComplete = 0;
 
-	// This should never happen.
-	// It is however, safe to simply ignore any events provided, as if no messageBus if recorded,
-	// no fibers are permitted to block on events.
-	if (messageBus == NULL)
-		return;
+    // This should never happen.
+    // It is however, safe to simply ignore any events provided, as if no messageBus if recorded,
+    // no fibers are permitted to block on events.
+    if (messageBus == NULL)
+        return;
 
     // Check the wait queue, and wake up any fibers as necessary.
     while (f != NULL)
@@ -389,7 +389,7 @@ int fiber_wait_for_event(uint16_t id, uint16_t value)
     if(ret == DEVICE_OK)
         schedule();
 
-	return ret;
+    return ret;
 }
 
 /**
@@ -415,8 +415,8 @@ int fiber_wake_on_event(uint16_t id, uint16_t value)
 {
     Fiber *f = currentFiber;
 
-	if (messageBus == NULL || !fiber_scheduler_running())
-		return DEVICE_NOT_SUPPORTED;
+    if (messageBus == NULL || !fiber_scheduler_running())
+        return DEVICE_NOT_SUPPORTED;
 
     // Sleep is a blocking call, so if we're in a fork on block context,
     // it's time to spawn a new fiber...
@@ -474,7 +474,7 @@ int invoke(void (*entry_fn)(void))
         return DEVICE_INVALID_PARAMETER;
 
     if (!fiber_scheduler_running())
-		return DEVICE_NOT_SUPPORTED;
+        return DEVICE_NOT_SUPPORTED;
 
     if (currentFiber->flags & DEVICE_FIBER_FLAG_FOB)
     {
@@ -537,7 +537,7 @@ int invoke(void (*entry_fn)(void *), void *param)
         return DEVICE_INVALID_PARAMETER;
 
     if (!fiber_scheduler_running())
-		return DEVICE_NOT_SUPPORTED;
+        return DEVICE_NOT_SUPPORTED;
 
     if (currentFiber->flags & (DEVICE_FIBER_FLAG_FOB | DEVICE_FIBER_FLAG_PARENT | DEVICE_FIBER_FLAG_CHILD))
     {
@@ -673,7 +673,7 @@ Fiber *__create_fiber(uint32_t ep, uint32_t cp, uint32_t pm, int parameterised)
 Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void))
 {
     if (!fiber_scheduler_running())
-		return NULL;
+        return NULL;
 
     return __create_fiber((uint32_t) entry_fn, (uint32_t)completion_fn, 0, 0);
 }
@@ -694,7 +694,7 @@ Fiber *create_fiber(void (*entry_fn)(void), void (*completion_fn)(void))
 Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)(void *))
 {
     if (!fiber_scheduler_running())
-		return NULL;
+        return NULL;
 
     return __create_fiber((uint32_t) entry_fn, (uint32_t)completion_fn, (uint32_t) param, 1);
 }
@@ -707,7 +707,7 @@ Fiber *create_fiber(void (*entry_fn)(void *), void *param, void (*completion_fn)
 void release_fiber(void *)
 {
     if (!fiber_scheduler_running())
-		return;
+        return;
 
     release_fiber();
 }
@@ -720,7 +720,7 @@ void release_fiber(void *)
 void release_fiber(void)
 {
     if (!fiber_scheduler_running())
-		return;
+        return;
 
     // Remove ourselves form the runqueue.
     dequeue_fiber(currentFiber);

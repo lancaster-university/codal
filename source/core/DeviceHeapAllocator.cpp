@@ -55,8 +55,8 @@ DEALINGS IN THE SOFTWARE.
 
 struct HeapDefinition
 {
-    uint32_t *heap_start;		// Physical address of the start of this heap.
-    uint32_t *heap_end;		    // Physical address of the end of this heap.
+    uint32_t *heap_start;       // Physical address of the start of this heap.
+    uint32_t *heap_end;         // Physical address of the end of this heap.
 };
 
 // A list of all active heap regions, and their dimensions in memory.
@@ -67,8 +67,8 @@ uint8_t heap_count = 0;
 // Diplays a usage summary about a given heap...
 void device_heap_print(HeapDefinition &heap)
 {
-	uint32_t	blockSize;
-	uint32_t	*block;
+    uint32_t    blockSize;
+    uint32_t    *block;
     int         totalFreeBlock = 0;
     int         totalUsedBlock = 0;
     int         cols = 0;
@@ -83,13 +83,13 @@ void device_heap_print(HeapDefinition &heap)
     if(SERIAL_DEBUG) SERIAL_DEBUG->printf("heap_end   : %p\n", heap.heap_end);
     if(SERIAL_DEBUG) SERIAL_DEBUG->printf("heap_size  : %d\n", (int)heap.heap_end - (int)heap.heap_start);
 
-	// Disable IRQ temporarily to ensure no race conditions!
+    // Disable IRQ temporarily to ensure no race conditions!
     __disable_irq();
 
-	block = heap.heap_start;
-	while (block < heap.heap_end)
-	{
-		blockSize = *block & ~DEVICE_HEAP_BLOCK_FREE;
+    block = heap.heap_start;
+    while (block < heap.heap_end)
+    {
+        blockSize = *block & ~DEVICE_HEAP_BLOCK_FREE;
         if(SERIAL_DEBUG) SERIAL_DEBUG->printf("[%c:%d] ", *block & DEVICE_HEAP_BLOCK_FREE ? 'F' : 'U', blockSize*4);
         if (cols++ == 20)
         {
@@ -102,10 +102,10 @@ void device_heap_print(HeapDefinition &heap)
         else
             totalUsedBlock += blockSize;
 
-		block += blockSize;
+        block += blockSize;
     }
 
-	// Enable Interrupts
+    // Enable Interrupts
     __enable_irq();
 
     if(SERIAL_DEBUG) SERIAL_DEBUG->printf("\n");
@@ -159,7 +159,7 @@ int device_create_heap(uint32_t start, uint32_t end)
     if (end <= start || end - start < DEVICE_HEAP_BLOCK_SIZE*2 || end % 4 != 0 || start % 4 != 0)
         return DEVICE_INVALID_PARAMETER;
 
-	// Disable IRQ temporarily to ensure no race conditions!
+    // Disable IRQ temporarily to ensure no race conditions!
     __disable_irq();
 
     // Record the dimensions of this new heap
@@ -170,7 +170,7 @@ int device_create_heap(uint32_t start, uint32_t end)
     device_initialise_heap(heap[heap_count]);
     heap_count++;
 
-	// Enable Interrupts
+    // Enable Interrupts
     __enable_irq();
 
 #if CONFIG_ENABLED(DEVICE_DBG) && CONFIG_ENABLED(DEVICE_HEAP_DBG)
@@ -239,85 +239,85 @@ int device_create_nested_heap(float ratio)
   */
 void *device_malloc(size_t size, HeapDefinition &heap)
 {
-	uint32_t	blockSize = 0;
-	uint32_t	blocksNeeded = size % DEVICE_HEAP_BLOCK_SIZE == 0 ? size / DEVICE_HEAP_BLOCK_SIZE : size / DEVICE_HEAP_BLOCK_SIZE + 1;
-	uint32_t	*block;
-	uint32_t	*next;
+    uint32_t    blockSize = 0;
+    uint32_t    blocksNeeded = size % DEVICE_HEAP_BLOCK_SIZE == 0 ? size / DEVICE_HEAP_BLOCK_SIZE : size / DEVICE_HEAP_BLOCK_SIZE + 1;
+    uint32_t    *block;
+    uint32_t    *next;
 
-	if (size <= 0)
-		return NULL;
+    if (size <= 0)
+        return NULL;
 
-	// Account for the index block;
-	blocksNeeded++;
+    // Account for the index block;
+    blocksNeeded++;
 
-	// Disable IRQ temporarily to ensure no race conditions!
+    // Disable IRQ temporarily to ensure no race conditions!
     __disable_irq();
 
-	// We implement a first fit algorithm with cache to handle rapid churn...
+    // We implement a first fit algorithm with cache to handle rapid churn...
     // We also defragment free blocks as we search, to optimise this and future searches.
-	block = heap.heap_start;
-	while (block < heap.heap_end)
-	{
-		// If the block is used, then keep looking.
-		if(!(*block & DEVICE_HEAP_BLOCK_FREE))
-		{
-			block += *block;
-			continue;
-		}
+    block = heap.heap_start;
+    while (block < heap.heap_end)
+    {
+        // If the block is used, then keep looking.
+        if(!(*block & DEVICE_HEAP_BLOCK_FREE))
+        {
+            block += *block;
+            continue;
+        }
 
-		blockSize = *block & ~DEVICE_HEAP_BLOCK_FREE;
+        blockSize = *block & ~DEVICE_HEAP_BLOCK_FREE;
 
-		// We have a free block. Let's see if the subsequent ones are too. If so, we can merge...
-		next = block + blockSize;
+        // We have a free block. Let's see if the subsequent ones are too. If so, we can merge...
+        next = block + blockSize;
 
-		while (*next & DEVICE_HEAP_BLOCK_FREE)
-		{
-			if (next >= heap.heap_end)
-				break;
+        while (*next & DEVICE_HEAP_BLOCK_FREE)
+        {
+            if (next >= heap.heap_end)
+                break;
 
-			// We can merge!
-			blockSize += (*next & ~DEVICE_HEAP_BLOCK_FREE);
-			*block = blockSize | DEVICE_HEAP_BLOCK_FREE;
+            // We can merge!
+            blockSize += (*next & ~DEVICE_HEAP_BLOCK_FREE);
+            *block = blockSize | DEVICE_HEAP_BLOCK_FREE;
 
-			next = block + blockSize;
-		}
+            next = block + blockSize;
+        }
 
-		// We have a free block. Let's see if it's big enough.
+        // We have a free block. Let's see if it's big enough.
         // If so, we have a winner.
-		if (blockSize >= blocksNeeded)
-			break;
+        if (blockSize >= blocksNeeded)
+            break;
 
-		// Otherwise, keep looking...
-		block += blockSize;
-	}
+        // Otherwise, keep looking...
+        block += blockSize;
+    }
 
-	// We're full!
-	if (block >= heap.heap_end)
+    // We're full!
+    if (block >= heap.heap_end)
     {
         __enable_irq();
         return NULL;
     }
 
-	// If we're at the end of memory or have very near match then mark the whole segment as in use.
-	if (blockSize <= blocksNeeded+1 || block+blocksNeeded+1 >= heap.heap_end)
-	{
-		// Just mark the whole block as used.
-		*block &= ~DEVICE_HEAP_BLOCK_FREE;
-	}
-	else
-	{
-		// We need to split the block.
-		uint32_t *splitBlock = block + blocksNeeded;
-		*splitBlock = blockSize - blocksNeeded;
-		*splitBlock |= DEVICE_HEAP_BLOCK_FREE;
+    // If we're at the end of memory or have very near match then mark the whole segment as in use.
+    if (blockSize <= blocksNeeded+1 || block+blocksNeeded+1 >= heap.heap_end)
+    {
+        // Just mark the whole block as used.
+        *block &= ~DEVICE_HEAP_BLOCK_FREE;
+    }
+    else
+    {
+        // We need to split the block.
+        uint32_t *splitBlock = block + blocksNeeded;
+        *splitBlock = blockSize - blocksNeeded;
+        *splitBlock |= DEVICE_HEAP_BLOCK_FREE;
 
-		*block = blocksNeeded;
-	}
+        *block = blocksNeeded;
+    }
 
-	// Enable Interrupts
+    // Enable Interrupts
     __enable_irq();
 
-	return block+1;
+    return block+1;
 }
 
 /**
@@ -366,7 +366,7 @@ void *device_malloc(size_t size)
 #endif
 
 #if CONFIG_ENABLED(DEVICE_PANIC_HEAP_FULL)
-	device.panic(DEVICE_OOM);
+    device.panic(DEVICE_OOM);
 #endif
 
     return NULL;
@@ -379,15 +379,15 @@ void *device_malloc(size_t size)
   */
 void device_free(void *mem)
 {
-	uint32_t	*memory = (uint32_t *)mem;
-	uint32_t	*cb = memory-1;
+    uint32_t    *memory = (uint32_t *)mem;
+    uint32_t    *cb = memory-1;
 
 #if CONFIG_ENABLED(DEVICE_DBG) && CONFIG_ENABLED(DEVICE_HEAP_DBG)
     if (heap_count > 0)
         if(SERIAL_DEBUG) SERIAL_DEBUG->printf("device_free:   %p\n", mem);
 #endif
     // Sanity check.
-	if (memory == NULL)
+    if (memory == NULL)
        return;
 
     // If this memory was created from a heap registered with us, free it.
@@ -396,8 +396,8 @@ void device_free(void *mem)
         if(memory > heap[i].heap_start && memory < heap[i].heap_end)
         {
             // The memory block given is part of this heap, so we can simply
-	        // flag that this memory area is now free, and we're done.
-	        *cb |= DEVICE_HEAP_BLOCK_FREE;
+            // flag that this memory area is now free, and we're done.
+            *cb |= DEVICE_HEAP_BLOCK_FREE;
             return;
         }
     }
