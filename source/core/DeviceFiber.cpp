@@ -39,7 +39,7 @@ DEALINGS IN THE SOFTWARE.
 extern osThreadDef_t os_thread_def_main;
 static const uint32_t mbed_stack_base = (uint32_t)os_thread_def_main.stack_pointer + os_thread_def_main.stacksize;
 #else
-static const uint32_t mbed_stack_base = CORTEX_M0_STACK_BASE;
+static const uint32_t mbed_stack_base = DEVICE_CPU_STACK_BASE;
 #endif
 
 /*

@@ -33,52 +33,8 @@ DEALINGS IN THE SOFTWARE.
 #include "mbed.h"
 #include "yotta_cfg_mappings.h"
 
-//
-// Memory configuration
-//
-
-// The start address of usable RAM memory.
-#ifndef DEVICE_SRAM_BASE
-#define DEVICE_SRAM_BASE                      0x20000008
-#endif
-
-// Physical address of the top of SRAM.
-#ifndef DEVICE_SRAM_END
-#define DEVICE_SRAM_END                       0x20004000
-#endif
-
-// The end address of memory normally reserved for Soft Device.
-#ifndef DEVICE_SD_LIMIT
-#define DEVICE_SD_LIMIT                       0x20002000
-#endif
-
-// The physical address in memory of the Soft Device GATT table.
-#ifndef DEVICE_SD_GATT_TABLE_START
-#define DEVICE_SD_GATT_TABLE_START            0x20001900
-#endif
-
-// Physical address of the top of the system stack (on mbed-classic this is the top of SRAM)
-#ifndef CORTEX_M0_STACK_BASE
-#define CORTEX_M0_STACK_BASE                  DEVICE_SRAM_END
-#endif
-
-// Amount of memory reserved for the stack at the end of memory (bytes).
-#ifndef DEVICE_STACK_SIZE
-  #ifdef MBED_CONF_RTOS_PRESENT
-  #define DEVICE_STACK_SIZE                   ISR_STACK_SIZE
-  #else
-  #define DEVICE_STACK_SIZE                   2048
-  #endif
-#endif
-
-// Physical address of the end of mbed heap space.
-#ifndef DEVICE_HEAP_END
-  #ifdef MBED_CONF_RTOS_PRESENT
-  #define DEVICE_HEAP_END                     (DEVICE_SRAM_END - DEVICE_STACK_SIZE)
-  #else
-  #define DEVICE_HEAP_END                     (CORTEX_M0_STACK_BASE - DEVICE_STACK_SIZE)
-  #endif
-#endif
+#include "codal_target_peripherals.h"
+#include "codal_target_memory.h"
 
 // Enables or disables the DeviceHeapllocator. Note that if disabled, no reuse of the SRAM normally
 // reserved for SoftDevice is possible, and out of memory condition will no longer be trapped...
@@ -103,13 +59,6 @@ DEALINGS IN THE SOFTWARE.
 // Set '1' to enable.
 #ifndef DEVICE_HEAP_REUSE_SD
 #define DEVICE_HEAP_REUSE_SD                  1
-#endif
-
-// The amount of memory allocated to Soft Device to hold its BLE GATT table.
-// For standard S110 builds, this should be word aligned and in the range 0x300 - 0x700.
-// Any unused memory will be automatically reclaimed as HEAP memory if both DEVICE_HEAP_REUSE_SD and DEVICE_HEAP_ALLOCATOR are enabled.
-#ifndef DEVICE_SD_GATT_TABLE_SIZE
-#define DEVICE_SD_GATT_TABLE_SIZE             0x300
 #endif
 
 //

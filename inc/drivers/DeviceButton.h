@@ -31,10 +31,6 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceComponent.h"
 #include "DeviceEvent.h"
 
-#define DEVICE_PIN_BUTTON_A                   P0_17
-#define DEVICE_PIN_BUTTON_B                   P0_26
-#define DEVICE_PIN_BUTTON_RESET               P0_19
-
 #define DEVICE_BUTTON_EVT_DOWN                1
 #define DEVICE_BUTTON_EVT_UP                  2
 #define DEVICE_BUTTON_EVT_CLICK               3

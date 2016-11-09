@@ -38,27 +38,6 @@ DEALINGS IN THE SOFTWARE.
 #define IO_STATUS_EVENT_ON_EDGE             0x20        // Pin will generate events on pin change
 #define IO_STATUS_EVENT_PULSE_ON_EDGE       0x40        // Pin will generate events on pin change
 
-//#defines for each edge connector pin
-#define DEVICE_PIN_P0                     P0_3        //P0 is the left most pad (ANALOG/DIGITAL) used to be P0_3 on green board
-#define DEVICE_PIN_P1                     P0_2        //P1 is the middle pad (ANALOG/DIGITAL)
-#define DEVICE_PIN_P2                     P0_1        //P2 is the right most pad (ANALOG/DIGITAL) used to be P0_1 on green board
-#define DEVICE_PIN_P3                     P0_4        //COL1 (ANALOG/DIGITAL)
-#define DEVICE_PIN_P4                     P0_5        //COL2 (ANALOG/DIGITAL)
-#define DEVICE_PIN_P5                     P0_17       //BTN_A
-#define DEVICE_PIN_P6                     P0_12       //COL9
-#define DEVICE_PIN_P7                     P0_11       //COL8
-#define DEVICE_PIN_P8                     P0_18       //PIN 18
-#define DEVICE_PIN_P9                     P0_10       //COL7
-#define DEVICE_PIN_P10                    P0_6        //COL3 (ANALOG/DIGITAL)
-#define DEVICE_PIN_P11                    P0_26       //BTN_B
-#define DEVICE_PIN_P12                    P0_20       //PIN 20
-#define DEVICE_PIN_P13                    P0_23       //SCK
-#define DEVICE_PIN_P14                    P0_22       //MISO
-#define DEVICE_PIN_P15                    P0_21       //MOSI
-#define DEVICE_PIN_P16                    P0_16       //PIN 16
-#define DEVICE_PIN_P19                    P0_0        //SCL
-#define DEVICE_PIN_P20                    P0_30       //SDA
-
 #define DEVICE_PIN_MAX_OUTPUT             1023
 
 #define DEVICE_PIN_MAX_SERVO_RANGE        180
