@@ -1,6 +1,10 @@
 #ifndef CODAL_USB_H
 #define CODAL_USB_H
 
+#include <stdint.h>
+#include "ErrorNo.h"
+#include "USB.h"
+
 #define GET_STATUS    0
 #define CLEAR_FEATURE    1
 //Reserved for future use    2
@@ -55,16 +59,6 @@
 #define DEVICE_REMOTE_WAKEUP             1
 #define FEATURE_SELFPOWERED_ENABLED     (1 << 0)
 #define FEATURE_REMOTE_WAKEUP_ENABLED   (1 << 1)
-
-#define USB_EP_COUNT                    3
-
-#define EP_TYPE_CONTROL                 (0x00)
-#define EP_TYPE_BULK_IN                 ((1<<EPTYPE1) | (1<<EPDIR))
-#define EP_TYPE_BULK_OUT                (1<<EPTYPE1)
-#define EP_TYPE_INTERRUPT_IN            ((1<<EPTYPE1) | (1<<EPTYPE0) | (1<<EPDIR))
-#define EP_TYPE_INTERRUPT_OUT           ((1<<EPTYPE1) | (1<<EPTYPE0))
-#define EP_TYPE_ISOCHRONOUS_IN          ((1<<EPTYPE0) | (1<<EPDIR))
-#define EP_TYPE_ISOCHRONOUS_OUT         (1<<EPTYPE0)
 
 //    Device
 typedef struct {
@@ -125,13 +119,6 @@ typedef struct
 
 typedef struct
 {
-    InterfaceDescriptor msc;
-    EndpointDescriptor  in;
-    EndpointDescriptor  out;
-} MSCDescriptor;
-
-typedef struct
-{
     uint8_t bmRequestType;
     uint8_t bRequest;
     uint8_t wValueL;
@@ -153,26 +140,57 @@ typedef struct{
 
 class CodalUSBInterface
 {
-    void configure();
-
     public:
-    CodalUSBInterface();
 
-    void setup();
+    CodalUSBInterface() {}
 
-    void handle();
-    
-    void getDescriptor();
+    virtual int setup(USBSetup& setup) { return DEVICE_NOT_SUPPORTED; }
 
-    void getDescriptorSize();
+    virtual int handle() { return DEVICE_NOT_SUPPORTED; }
+
+    virtual USBEndpoint* getEndpoints() { return NULL; }
+
+    virtual uint8_t getEndpointCount() { return 0; }
+
+    virtual uint8_t* getDescriptor() { return NULL; }
+
+    virtual uint8_t getDescriptorSize() { return 0; }
 };
 
 class CodalUSB
 {
+    uint8_t endpointsUsed;
+
     void configure();
 
+    bool sendConfig(int maxLen);
+
     public:
+    static CodalUSB *usbInstance;
+
     CodalUSB();
+
+    int add(CodalUSBInterface& interface);
+
+    bool send(uint8_t data);
+
+    int send(uint8_t* data, int len);
+
+    uint8_t read();
+
+    int read(uint8_t* buf, int len);
+
+    bool sendDescriptors(USBSetup& setup);
+
+    int classRequest(USBSetup& setup);
+
+    int configureEndpoints();
+
+    int isInitialised();
+
+    CodalUSB* getInstance();
+
+    int start();
 };
 
 #endif

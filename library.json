@@ -9,7 +9,9 @@
             "+<source/types/DeviceEvent.cpp>",
             "+<source/asm/AVRContextSwitch.S>",
             "+<source/device/Timer1.cpp>",
+            "+<source/device/USB.cpp>",
             "+<source/drivers/DeviceMessageBus.cpp>",
+            "+<source/drivers/USBMSC.cpp>",
             "+<source/drivers/Pin.cpp>",
             "-<source/core/DeviceHeapAllocator.cpp>"
         ],
