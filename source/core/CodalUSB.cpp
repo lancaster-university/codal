@@ -47,10 +47,20 @@ void set_limits(int end)
 
 ISR(USB_COM_vect)
 {
-    set_endpoint(0);
-
     if (!recieved_setup())
+    {
+        int endpoint = get_endpoint();
+
+        if(usb_initialised > 0 && endpoint > 0)
+        {
+            set_endpoint(endpoint);
+            CodalUSB::usbInstance->endpointRequest(endpoint);
+            clear_tx_int();
+            clear_rx_int();
+        }
+
         return;
+    }
 
     USBSetup setup;
     CodalUSB::usbInstance->read((uint8_t*)&setup,8);
@@ -64,13 +74,15 @@ ISR(USB_COM_vect)
     // wait for reception to complete
         UEINTX = ~(1<<TXINI);
 
-    bool ok = true;
+    int status = DEVICE_OK;
 
     // Standard Requests
     uint16_t wValue = (setup.wValueH << 8) | setup.wValueL;
     uint8_t request_type = setup.bmRequestType;
 
-    if ((request_type & TYPE) == TYPE_STANDARD)
+    set_endpoint(0);
+
+    if ((request_type & TYPE) == REQUEST_TYPE_STANDARD)
     {
         switch(setup.bRequest)
         {
@@ -102,7 +114,7 @@ ISR(USB_COM_vect)
                 UDADDR = setup.wValueL | (1<<ADDEN);
                 break;
             case GET_DESCRIPTOR:
-                ok = CodalUSB::usbInstance->sendDescriptors(setup);
+                status = CodalUSB::usbInstance->sendDescriptors(setup);
                 break;
             case SET_DESCRIPTOR:
                 stall();
@@ -118,7 +130,7 @@ ISR(USB_COM_vect)
                     usb_initialised = setup.wValueL;
                 }
                 else
-                    ok = false;
+                    status = DEVICE_NOT_SUPPORTED;
                 break;
         }
     }
@@ -126,10 +138,14 @@ ISR(USB_COM_vect)
     {
         // Max length of transfer
         set_limits(setup.wLength);
-        ok = CodalUSB::usbInstance->classRequest(setup);
+
+        set_endpoint(0);
+        CodalUSB::usbInstance->send(0);
+        CodalUSB::usbInstance->send(1);
+        status = CodalUSB::usbInstance->classRequest(setup);
     }
 
-    if (ok)
+    if (status >= 0)
         clear_tx_int();
     else
         stall();
@@ -197,7 +213,7 @@ int CodalUSB::read(uint8_t* buf, int len)
     return len;
 }
 
-bool CodalUSB::sendConfig(int maxLen)
+int CodalUSB::sendConfig(int maxLen)
 {
     ConfigDescriptor config;
     memcpy(&config, &static_config, sizeof(ConfigDescriptor));
@@ -227,10 +243,10 @@ bool CodalUSB::sendConfig(int maxLen)
         send(tmp->interface->getDescriptor(), tmp->interface->getDescriptorSize());
     }
 
-    return true;
+    return DEVICE_OK;
 }
 
-bool CodalUSB::sendDescriptors(USBSetup& setup)
+int CodalUSB::sendDescriptors(USBSetup& setup)
 {
     uint8_t type = setup.wValueH;
 
@@ -246,13 +262,13 @@ bool CodalUSB::sendDescriptors(USBSetup& setup)
     {
         // check if we exceed our bounds.
         if(setup.wValueL > STRING_DESCRIPTOR_COUNT - 1)
-            return false;
+            return DEVICE_NOT_SUPPORTED;
 
         // send the string descriptor the host asked for.
-        return send((uint8_t *)&string_descriptors[setup.wValueL], sizeof(StringDescriptor));
+        return send((uint8_t *)&string_descriptors[setup.wValueL], sizeof(string_descriptors[setup.wValueL]));
     }
 
-    return true;
+    return DEVICE_OK;
 }
 
 CodalUSB::CodalUSB()
@@ -327,8 +343,49 @@ int CodalUSB::isInitialised()
 
 int CodalUSB::classRequest(USBSetup& setup)
 {
-    //determine the endpoint, give it to the correct driver.
+    InterfaceList* tmp = NULL;
+    struct list_head *iter, *q = NULL;
+
+    list_for_each_safe(iter, q, &usb_list)
+    {
+        tmp = list_entry(iter, InterfaceList, list);
+        tmp->interface->classRequest(setup);
+
+        //if( == DEVICE_OK)
+        //    return DEVICE_OK;
+    }
+
     return DEVICE_OK;
+}
+
+int CodalUSB::endpointRequest(uint8_t endpoint)
+{
+    InterfaceList* tmp = NULL;
+    struct list_head *iter, *q = NULL;
+
+    uint8_t endpointCount = 1;
+    uint8_t iEpCount = 0;
+    uint8_t i = 0;
+
+    list_for_each_safe(iter, q, &usb_list)
+    {
+        tmp = list_entry(iter, InterfaceList, list);
+
+        iEpCount = tmp->interface->getEndpointCount();
+
+        for(i = 0; i < iEpCount; i++)
+        {
+            if(endpointCount == endpoint)
+            {
+                tmp->interface->endpointRequest(endpoint, i);
+                return DEVICE_OK;
+            }
+
+            endpointCount++;
+        }
+    }
+
+    return DEVICE_NOT_SUPPORTED;
 }
 
 int CodalUSB::start()

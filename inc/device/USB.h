@@ -149,6 +149,15 @@ static inline void set_endpoint(uint8_t ep)
     UENUM = ep;
 }
 
+static inline int get_endpoint()
+{
+    for(uint8_t i = 0; i < 8; i++)
+        if(UEINT & _BV(i))
+            return i;
+
+    return -1;
+}
+
 static inline uint8_t get_frame_number()
 {
 	return UDFNUML;

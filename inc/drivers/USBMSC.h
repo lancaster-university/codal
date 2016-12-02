@@ -14,9 +14,9 @@ class USBMSC : public CodalUSBInterface
     public:
     USBMSC();
 
-    int setup(USBSetup& setup);
+    int classRequest(USBSetup& setup);
 
-    int handle();
+    int endpointRequest(uint8_t endpoint, uint8_t endpointOffset);
 
     USBEndpoint* getEndpoints();
 
