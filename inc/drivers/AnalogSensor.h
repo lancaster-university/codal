@@ -55,23 +55,22 @@ DEALINGS IN THE SOFTWARE.
 class AnalogSensor : public DeviceComponent
 {
     protected:
-
-    DevicePin       &_pin;              // Pin where the sensor is connected.
     uint16_t        samplePeriod;       // The time between samples, in milliseconds.
-    float           sensitivity;        // A value between 0..1 used with a decay average to smooth the sample data. 
+    float           sensitivity;        // A value between 0..1 used with a decay average to smooth the sample data.
     uint16_t        highThreshold;      // threshold at which a HIGH event is generated
     uint16_t        lowThreshold;       // threshold at which a LOW event is generated
     int             sensorValue;        // Last sampled data.
 
     public:
+    DevicePin       &_pin;              // Pin where the sensor is connected.
 
     /**
       * Constructor.
       *
-      * Creates a generic AnalogSensor. 
+      * Creates a generic AnalogSensor.
       *
       * @param pin The pin on which to sense
-      * @param id The ID of this compoenent e.g. DEVICE_ID_THERMOMETER 
+      * @param id The ID of this compoenent e.g. DEVICE_ID_THERMOMETER
      */
     AnalogSensor(DevicePin &pin, uint16_t id);
 
@@ -93,7 +92,7 @@ class AnalogSensor : public DeviceComponent
      * @return The current value of the sensor.
      */
     int getValue();
-    
+
     /**
       * Set the automatic sample period of the accelerometer to the specified value (in ms).
       *

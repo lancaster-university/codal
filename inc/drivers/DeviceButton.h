@@ -42,7 +42,6 @@ class DeviceButton : public AbstractButton
     unsigned long downStartTime;                            // used to store the current system clock when a button down event occurs
     uint8_t sigma;                                          // integration of samples over time. We use this for debouncing, and noise tolerance for touch sensing
     DeviceButtonEventConfiguration eventConfiguration;      // Do we want to generate high level event (clicks), or defer this to another service.
-    DeviceButtonPolarity polarity;                          // Determines if the button is active HIGH or LOW.
 
     public:
     DevicePin &_pin;                                        // The pin this button is connected to.
@@ -110,12 +109,14 @@ class DeviceButton : public AbstractButton
     ~DeviceButton();
 
     protected:
+    DeviceButtonPolarity polarity;                          // Determines if the button is active HIGH or LOW.
+
     /**
      * Determines if this button is instantenously active (i.e. pressed).
      * Internal method, use before debouncing.
      */
     virtual int buttonActive();
-    
+
 };
 
 #endif

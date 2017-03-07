@@ -29,15 +29,13 @@ DEALINGS IN THE SOFTWARE.
  * Constructor.
  * Create an AnalogButton instance used to generate button events for an AnalogSensor.
  *
- * @param pin the pin on which the AnalogSensor senses.
  * @param id the unique EventModel id of this component.
  * @param sensor the AnalogSensor to generate button events for.
  * @param activeAboveThreshold whether the button should be considered active when readings are above the given threshold or below.
  * @param threshold the threshold at which the button is considered active.
  *
  */
-AnalogButton::AnalogButton(DevicePin &pin, uint16_t id, AnalogSensor &sensor, bool activeAboveThreshold, int threshold) : DeviceButton(pin, id, DEVICE_BUTTON_ALL_EVENTS, ACTIVE_LOW, PullNone), analogSensor(sensor) {
-    this->activeAboveThreshold = activeAboveThreshold;
+AnalogButton::AnalogButton(uint16_t id, AnalogSensor &sensor, DeviceButtonPolarity polarity, int threshold) : DeviceButton(sensor._pin, id, DEVICE_BUTTON_ALL_EVENTS, polarity, PullNone), analogSensor(sensor) {
     this->threshold = threshold;
 }
 
@@ -47,7 +45,7 @@ AnalogButton::AnalogButton(DevicePin &pin, uint16_t id, AnalogSensor &sensor, bo
  */
 int AnalogButton::buttonActive()
 {
-    if (activeAboveThreshold)
+    if (polarity)
     {
         return analogSensor.getValue() >= threshold;
     }
@@ -55,30 +53,6 @@ int AnalogButton::buttonActive()
     {
         return analogSensor.getValue() <= threshold;
     }
-}
-
-/**
- * If set to true, the button will be considered active when the AnalogSensor's
- * readings are above the threshold. If false, the button will be considered active
- * when the AnalogSensor's readings are below the threshold
- *
- * @param above Determines if the button should be active above or below the set threshold
- *
- * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if the request fails.
- */
-int AnalogButton::setActiveAboveThreshold(bool above) {
-    this->activeAboveThreshold = above;
-
-    return DEVICE_OK;
-}
-
-/**
- * Determines whether or not the button is active above or below the set threshold
- *
- * @return true if the button is active above the threshold and false if it is active below
- */
-bool AnalogButton::isActiveAboveThreshold() {
-    return activeAboveThreshold;
 }
 
 /**

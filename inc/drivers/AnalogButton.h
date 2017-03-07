@@ -30,6 +30,8 @@ DEALINGS IN THE SOFTWARE.
 #include "AnalogSensor.h"
 
 
+#define ANALOG_BUTTON_STATE_ACTIVE_ABOVE       0x10
+
 /**
  * Class definition for an AnalogButton
  *
@@ -41,7 +43,6 @@ class AnalogButton : public DeviceButton
     protected:
     AnalogSensor    &analogSensor;           // The AnalogSensor driving this button
     uint16_t        threshold;
-    bool            activeOnHigh;
 
 
     public:
@@ -50,32 +51,13 @@ class AnalogButton : public DeviceButton
      * Constructor.
      * Create an AnalogButton instance used to generate button events for an AnalogSensor.
      *
-     * @param pin the pin on which the AnalogSensor senses.
      * @param id the unique EventModel id of this component.
      * @param sensor the AnalogSensor to generate button events for.
-     * @param activeAboveThreshold whether the button should be considered active when readings are above the given threshold or below.
+     * @param polarity whether the button should be considered active when readings are above the given threshold or below.
      * @param threshold the threshold at which the button is considered active.
      *
      */
-    AnalogButton(DevicePin &pin, uint16_t id, AnalogSensor &sensor, bool activeAboveThreshold, int threshold = -1);
-
-    /**
-     * If set to true, the button will be considered active when the AnalogSensor's
-     * readings are above the threshold. If false, the button will be considered active
-     * when the AnalogSensor's readings are below the threshold
-     *
-     * @param above Determines if the button should be active above or below the set threshold
-     *
-     * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER if the request fails.
-     */
-    int setActiveAboveThreshold(bool above);
-
-    /**
-     * Determines whether or not the button is active above or below the set threshold
-     *
-     * @return true if the button is active above the threshold and false if it is active below
-     */
-    bool isActiveAboveThreshold();
+    AnalogButton(uint16_t id, AnalogSensor &sensor, DeviceButtonPolarity polarity = ACTIVE_LOW, int threshold = 512);
 
     /**
      * Set the threshold used to determine if the button is active or not.
