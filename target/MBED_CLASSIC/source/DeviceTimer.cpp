@@ -46,11 +46,11 @@ void DeviceTimer::processEvents()
     // Take the new head of the list (which may have changed)
     // as this will be the evne that is due next.
     tmp = list_entry(event_list.list.next, ClockEvent, list);
-  
+
     uint64_t now = getTimeUs();
     //uint64_t usRemaining = tmp->timestamp > now ? tmp->timestamp - now : 10;
 
-    uint64_t usRemaining = tmp->timestamp - now; 
+    uint64_t usRemaining = tmp->timestamp - now;
 
     if (tmp->timestamp < now || usRemaining < 100)
         goto START;

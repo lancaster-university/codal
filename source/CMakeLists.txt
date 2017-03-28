@@ -24,20 +24,12 @@ set(CODAL_CPP_FILES
     "types/ManagedBuffer.cpp"
     "types/RefCounted.cpp"
 
-    "device/DeviceTimer.cpp"
-    "device/USB.cpp"
-
-    "drivers/DynamicPwm.cpp"
     "drivers/AbstractButton.cpp"
     "drivers/DeviceButton.cpp"
     "drivers/MultiButton.cpp"
     "drivers/TouchButton.cpp"
     "drivers/TouchSensor.cpp"
-    "drivers/DevicePin.cpp"
-    "drivers/TimedInterruptIn.cpp"
-    "drivers/DeviceSerial.cpp"
     "drivers/DeviceMessageBus.cpp"
-    "drivers/DeviceI2C.cpp"
     "drivers/HID.cpp"
     "drivers/LIS3DH.cpp"
     "drivers/AnalogSensor.cpp"
@@ -75,13 +67,4 @@ add_library(codal
     ${CODAL_S_FILES}
 )
 
-#yotta_postprocess_target(LIBRARY codal)
-
-target_link_libraries(codal
-    mbed-classic
-)
-
-if(CMAKE_COMPILER_IS_GNUCC)
-    message("suppressing ALL warnings from mbed-classic")
-    target_compile_options(mbed-classic PRIVATE "-w")
-endif()
+target_link_libraries(codal ${CODAL_DEPS})

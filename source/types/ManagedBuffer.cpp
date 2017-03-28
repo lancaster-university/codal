@@ -1,4 +1,3 @@
-//#include "MicroBit.h"
 #include "ManagedBuffer.h"
 #include <limits.h>
 
@@ -16,12 +15,12 @@ void ManagedBuffer::initEmpty()
 }
 
 /**
- * Default Constructor. 
- * Creates an empty ManagedBuffer. 
+ * Default Constructor.
+ * Creates an empty ManagedBuffer.
  *
  * Example:
  * @code
- * ManagedBuffer p(); 
+ * ManagedBuffer p();
  * @endcode
  */
 ManagedBuffer::ManagedBuffer()
@@ -30,8 +29,8 @@ ManagedBuffer::ManagedBuffer()
 }
 
 /**
- * Constructor. 
- * Creates an empty ManagedBuffer of the given size. 
+ * Constructor.
+ * Creates an empty ManagedBuffer of the given size.
  *
  * @param length The length of the buffer to create.
  *
@@ -46,13 +45,13 @@ ManagedBuffer::ManagedBuffer(int length)
 }
 
 /**
- * Constructor. 
+ * Constructor.
  * Creates a new ManagedBuffer of the given size,
  * and fills it with the data provided.
  *
  * @param data The data with which to fill the buffer.
  * @param length The length of the buffer to create.
- * 
+ *
  * Example:
  * @code
  * uint8_t buf = {13,5,2};
@@ -65,15 +64,15 @@ ManagedBuffer::ManagedBuffer(uint8_t *data, int length)
 }
 
 /**
- * Copy Constructor. 
+ * Copy Constructor.
  * Add ourselves as a reference to an existing ManagedBuffer.
- * 
+ *
  * @param buffer The ManagedBuffer to reference.
  *
  * Example:
  * @code
  * ManagedBuffer p();
- * ManagedBuffer p2(i);        // Refers to the same buffer as p. 
+ * ManagedBuffer p2(i);        // Refers to the same buffer as p.
  * @endcode
  */
 ManagedBuffer::ManagedBuffer(const ManagedBuffer &buffer)
@@ -83,11 +82,11 @@ ManagedBuffer::ManagedBuffer(const ManagedBuffer &buffer)
 }
 
 /**
-  * Constructor. 
+  * Constructor.
   * Create a buffer from a raw BufferData pointer. It will ptr->incr(). This is to be used by specialized runtimes.
   *
   * @param p The pointer to use.
-  */    
+  */
 ManagedBuffer::ManagedBuffer(BufferData *p)
 {
     ptr = p;
@@ -99,7 +98,7 @@ ManagedBuffer::ManagedBuffer(BufferData *p)
  *
  * @param data The data with which to fill the buffer.
  * @param length The length of the buffer to create.
- * 
+ *
  */
 void ManagedBuffer::init(uint8_t *data, int length)
 {
@@ -121,7 +120,7 @@ void ManagedBuffer::init(uint8_t *data, int length)
 }
 
 /**
- * Destructor. 
+ * Destructor.
  * Removes buffer resources held by the instance.
  */
 ManagedBuffer::~ManagedBuffer()
@@ -130,7 +129,7 @@ ManagedBuffer::~ManagedBuffer()
 }
 
 /**
- * Copy assign operation. 
+ * Copy assign operation.
  *
  * Called when one ManagedBuffer is assigned the value of another using the '=' operator.
  * Decrements our reference count and free up the buffer as necessary.
@@ -138,14 +137,14 @@ ManagedBuffer::~ManagedBuffer()
  * and increase its reference count.
  *
  * @param p The ManagedBuffer to reference.
- * 
+ *
  * Example:
  * @code
  * uint8_t buf = {13,5,2};
- * ManagedBuffer p1(16); 
- * ManagedBuffer p2(buf, 3);        
+ * ManagedBuffer p1(16);
+ * ManagedBuffer p2(buf, 3);
  *
- * p1 = p2;  
+ * p1 = p2;
  * @endcode
  */
 ManagedBuffer& ManagedBuffer::operator = (const ManagedBuffer &p)
@@ -167,13 +166,13 @@ ManagedBuffer& ManagedBuffer::operator = (const ManagedBuffer &p)
  *
  * @param p The ManagedBuffer to test ourselves against.
  * @return true if this ManagedBuffer is identical to the one supplied, false otherwise.
- * 
+ *
  * Example:
  * @code
  *
  * uint8_t buf = {13,5,2};
- * ManagedBuffer p1(16); 
- * ManagedBuffer p2(buf, 3);        
+ * ManagedBuffer p1(16);
+ * ManagedBuffer p2(buf, 3);
  *
  * if(p1 == p2)                    // will be true
  *     uBit.display.scroll("same!");
@@ -184,7 +183,7 @@ bool ManagedBuffer::operator== (const ManagedBuffer& p)
     if (ptr == p.ptr)
         return true;
     else
-        return (ptr->length == p.ptr->length && (memcmp(ptr->payload, p.ptr->payload, ptr->length)==0));    
+        return (ptr->length == p.ptr->length && (memcmp(ptr->payload, p.ptr->payload, ptr->length)==0));
 }
 
 /**
@@ -195,7 +194,7 @@ bool ManagedBuffer::operator== (const ManagedBuffer& p)
  *
  * Example:
  * @code
- * ManagedBuffer p1(16); 
+ * ManagedBuffer p1(16);
  * p1.setByte(0,255);              // Sets the firts byte in the buffer to the value 255.
  * @endcode
  */
@@ -220,7 +219,7 @@ int ManagedBuffer::setByte(int position, uint8_t value)
  *
  * Example:
  * @code
- * ManagedBuffer p1(16); 
+ * ManagedBuffer p1(16);
  * p1.setByte(0,255);              // Sets the firts byte in the buffer to the value 255.
  * p1.getByte(0);                  // Returns 255.
  * @endcode
@@ -231,7 +230,7 @@ int ManagedBuffer::getByte(int position)
         return ptr->payload[position];
     else
         return DEVICE_INVALID_PARAMETER;
-} 
+}
 
 /**
   * Get current ptr, do not decr() it, and set the current instance to an empty buffer.
@@ -269,14 +268,14 @@ ManagedBuffer ManagedBuffer::slice(int offset, int length) const
 
 void ManagedBuffer::shift(int offset, int start, int len)
 {
-    if (len < 0) len = ptr->length - start;    
+    if (len < 0) len = ptr->length - start;
     if (start < 0 || start + len > ptr->length || start + len < start
         || len == 0 || offset == 0 || offset == INT_MIN) return;
     if (offset <= -len || offset >= len) {
         fill(0);
         return;
     }
-        
+
     uint8_t *data = ptr->payload + start;
     if (offset < 0) {
         offset = -offset;

@@ -174,7 +174,7 @@ void DeviceMessageBus::queueEvent(DeviceEvent &evt)
     DeviceEventQueueItem *item = new DeviceEventQueueItem(evt);
 
     // The queue was empty when we entered this function, so queue our event at the start of the queue.
-    __disable_irq();
+    device.disableInterrupts();
 
     if (prev == NULL)
     {
@@ -192,7 +192,7 @@ void DeviceMessageBus::queueEvent(DeviceEvent &evt)
 
     queueLength++;
 
-    __enable_irq();
+    device.enableInterrupts();
 }
 
 /**
@@ -204,7 +204,7 @@ DeviceEventQueueItem* DeviceMessageBus::dequeueEvent()
 {
     DeviceEventQueueItem *item = NULL;
 
-    __disable_irq();
+    device.disableInterrupts();
 
     if (evt_queue_head != NULL)
     {
@@ -217,8 +217,7 @@ DeviceEventQueueItem* DeviceMessageBus::dequeueEvent()
         queueLength--;
     }
 
-    __enable_irq();
-
+    device.enableInterrupts();
 
     return item;
 }
