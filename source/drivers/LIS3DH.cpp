@@ -37,6 +37,8 @@ DEALINGS IN THE SOFTWARE.
 #include "CodalCompat.h"
 #include "DeviceFiber.h"
 
+using namespace codal;
+
 /**
   * Configures the accelerometer for G range and sample rate defined
   * in this object. The nearest values are chosen to those defined
@@ -78,74 +80,23 @@ int LIS3DH::configure()
     // Now configure the accelerometer accordingly.
 
     // Firstly, Configure for normal precision operation at the sample rate requested.
-    result = writeCommand(LIS3DH_CTRL_REG1, actualSampleRate->value | 0x07);
+    result = i2c.write(address, LIS3DH_CTRL_REG1, actualSampleRate->value | 0x07);
     if (result != 0)
         return DEVICE_I2C_ERROR;
 
     // Enable the INT1 interrupt pin when XYZ data is available.
-    result = writeCommand(LIS3DH_CTRL_REG3, 0x10);
+    result = i2c.write(address, LIS3DH_CTRL_REG3, 0x10);
     if (result != 0)
         return DEVICE_I2C_ERROR;
 
     // Configure for the selected g range.
-    result = writeCommand(LIS3DH_CTRL_REG4,  actualSampleRange->value << 4);
+    result = i2c.write(address, LIS3DH_CTRL_REG4,  actualSampleRange->value << 4);
     if (result != 0)
         return DEVICE_I2C_ERROR;
 
     // Configure for a latched interrupt request.
-    result = writeCommand(LIS3DH_CTRL_REG5, 0x08);
+    result = i2c.write(address, LIS3DH_CTRL_REG5, 0x08);
     if (result != 0)
-        return DEVICE_I2C_ERROR;
-
-    return DEVICE_OK;
-}
-
-/**
-  * Issues a standard, 2 byte I2C command write to the accelerometer.
-  *
-  * Blocks the calling thread until complete.
-  *
-  * @param reg The address of the register to write to.
-  *
-  * @param value The value to write.
-  *
-  * @return DEVICE_OK on success, DEVICE_I2C_ERROR if the the write request failed.
-  */
-int LIS3DH::writeCommand(uint8_t reg, uint8_t value)
-{
-    uint8_t command[2];
-    command[0] = reg;
-    command[1] = value;
-
-    return i2c.write(address, (const char *)command, 2);
-}
-
-/**
-  * Issues a read command, copying data into the specified buffer.
-  *
-  * Blocks the calling thread until complete.
-  *
-  * @param reg The address of the register to access.
-  *
-  * @param buffer Memory area to read the data into.
-  *
-  * @param length The number of bytes to read.
-  *
-  * @return DEVICE_OK on success, DEVICE_INVALID_PARAMETER or DEVICE_I2C_ERROR if the the read request failed.
-  */
-int LIS3DH::readCommand(uint8_t reg, uint8_t* buffer, int length)
-{
-    int result;
-
-    if (buffer == NULL || length <= 0 )
-        return DEVICE_INVALID_PARAMETER;
-
-    result = i2c.write(address, (const char *)&reg, 1, true);
-    if (result !=0)
-        return DEVICE_I2C_ERROR;
-
-    result = i2c.read(address, (char *)buffer, length);
-    if (result !=0)
         return DEVICE_I2C_ERROR;
 
     return DEVICE_OK;
@@ -167,7 +118,7 @@ int LIS3DH::readCommand(uint8_t reg, uint8_t* buffer, int length)
   * LIS3DH accelerometer = LIS3DH(i2c);
   * @endcode
  */
-LIS3DH::LIS3DH(DeviceI2C& _i2c, DevicePin &_int1, uint16_t address,  uint16_t id) : i2c(_i2c), int1(_int1), sample()
+LIS3DH::LIS3DH(I2C& _i2c, Pin &_int1, uint16_t address,  uint16_t id) : i2c(_i2c), int1(_int1), sample()
 {
     // Store our identifiers.
     this->id = id;
@@ -211,7 +162,7 @@ int LIS3DH::whoAmI()
     uint8_t data;
     int result;
 
-    result = readCommand(LIS3DH_WHOAMI, &data, 1);
+    result = i2c.read(address,LIS3DH_WHOAMI, &data, 1);
     if (result !=0)
         return DEVICE_I2C_ERROR;
 
@@ -245,13 +196,13 @@ int LIS3DH::updateSample()
 
         // read the XYZ data (16 bit)
         // n.b. we need to set the MSB bit to enable multibyte transfers from this device (WHY? Who Knows!)
-        result = readCommand(0x80 | LIS3DH_OUT_X_L, (uint8_t *)data, 6);
+        result = i2c.read(address,0x80 | LIS3DH_OUT_X_L, (uint8_t *)data, 6);
 
         if (result !=0)
             return DEVICE_I2C_ERROR;
 
         // Acknowledge the interrupt.
-        readCommand(LIS3DH_INT1_SRC, &src, 1);
+        i2c.read(address,LIS3DH_INT1_SRC, &src, 1);
 
         // read MSB values...
         sample.x = data[1];
@@ -345,7 +296,7 @@ uint16_t LIS3DH::instantaneousPosture()
     if (shakeDetected && shake.count < ACCELEROMETER_SHAKE_COUNT_THRESHOLD)
     {
         shake.count++;
-  
+
         if (shake.count == 1)
             shake.timer = 0;
 
