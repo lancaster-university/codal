@@ -55,6 +55,9 @@ DEALINGS IN THE SOFTWARE.
 #define DEVICE_SCHEDULER_EVT_TICK           1
 #define DEVICE_SCHEDULER_EVT_IDLE           2
 
+#define DEVICE_GROUP_ID_SYSTEM              0
+#define DEVICE_GROUP_ID_USER                1
+
 /**
   * Representation of a single Fiber
   */
@@ -64,7 +67,8 @@ struct Fiber
     PROCESSOR_WORD_TYPE stack_bottom;              // The start address of this Fiber's stack. The stack is heap allocated, and full descending.
     PROCESSOR_WORD_TYPE stack_top;                 // The end address of this Fiber's stack.
     uint32_t context;                   // Context specific information.
-    uint32_t flags;                     // Information about this fiber.
+    uint16_t group_id;                  // See fiber_pause_group() below.
+    uint16_t flags;                     // Information about this fiber.
     Fiber **queue;                      // The queue this fiber is stored on.
     Fiber *next, *prev;                 // Position of this Fiber on the run queue.
 };
@@ -95,6 +99,24 @@ int fiber_scheduler_running();
   */
 void release_fiber(void);
 void release_fiber(void *param);
+
+
+/**
+  * Set the group of the current fiber. All fibers start in group 0.
+  *
+  * If you set group to one that is currently paused, the call will block, until resumed.
+  */
+void fiber_set_group(uint16_t group_id);
+
+/**
+  * Pause all fibers with the specific group id. They will not be scheduled until resumed.
+  */
+int fiber_pause_group(uint16_t group_id);
+
+/**
+  * Resume all fibers with the specific group id.
+  */
+int fiber_resume_group(uint16_t group_id);
 
 /**
  * Launches a fiber.
