@@ -1,9 +1,10 @@
 #include "ManagedBuffer.h"
 #include <limits.h>
+#include "CodalCompat.h"
 
 static const char empty[] __attribute__ ((aligned (4))) = "\xff\xff\0\0\0";
 
-using namespace std;
+using namespace codal;
 
 /**
   * Internal constructor helper.

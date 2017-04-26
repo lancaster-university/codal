@@ -49,6 +49,8 @@ DEALINGS IN THE SOFTWARE.
 #include "ManagedString.h"
 #include "CodalCompat.h"
 
+using namespace codal;
+
 static const char empty[] __attribute__ ((aligned (4))) = "\xff\xff\0\0\0";
 
 /**
@@ -451,7 +453,7 @@ ManagedString ManagedString::substring(int16_t start, int16_t length)
   * display.scroll(s + p) // scrolls "abcdefgh"
   * @endcode
   */
-ManagedString operator+ (const ManagedString& lhs, const ManagedString& rhs)
+ManagedString (codal::operator+) (const ManagedString& lhs, const ManagedString& rhs)
 {
 
     // If the either string is empty, nothing to do!

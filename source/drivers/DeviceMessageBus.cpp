@@ -52,6 +52,8 @@ DEALINGS IN THE SOFTWARE.
 #include "DeviceFiber.h"
 #include "ErrorNo.h"
 
+using namespace codal;
+
 /**
   * Default constructor.
   *
