@@ -44,6 +44,7 @@ set(YOTTA_AUTO_CODAL_CPP_FILES
     "drivers/DeviceI2C.cpp"
     "drivers/HID.cpp"
     "drivers/LIS3DH.cpp"
+    "drivers/AnalogButton.cpp"
     "drivers/AnalogSensor.cpp"
     "drivers/LinearAnalogSensor.cpp"
     "drivers/NonLinearAnalogSensor.cpp"
