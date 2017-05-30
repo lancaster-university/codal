@@ -394,6 +394,8 @@ class DevicePin : public DeviceComponent
       *       please use the InterruptIn class supplied by ARM mbed.
       */
     int eventOn(int eventType);
+    
+    int setPwm(int enabled);
 };
 
 #endif

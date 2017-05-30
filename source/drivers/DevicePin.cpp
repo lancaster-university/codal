@@ -639,3 +639,21 @@ int DevicePin::eventOn(int eventType)
 
     return DEVICE_OK;
 }
+
+int DevicePin::setPwm(int enabled)
+{
+    //check if this pin has an analogue mode...
+    if(!(PIN_CAPABILITY_ANALOG & capability))
+        return DEVICE_NOT_SUPPORTED;
+
+    //Check we still have the control over the DynamicPwm instance
+    if(obtainAnalogChannel() == DEVICE_OK)
+    {
+        if (enabled)
+            return ((DynamicPwm *)pin)->enable();
+        else
+            return ((DynamicPwm *)pin)->disable();
+    }
+
+    return DEVICE_NO_RESOURCES;
+}

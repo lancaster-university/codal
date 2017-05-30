@@ -200,3 +200,15 @@ int DynamicPwm::setPeriod(uint32_t period)
 {
     return setPeriodUs(period * 1000);
 }
+
+int DynamicPwm::enable()
+{
+    tcc_enable(&_pwm.tcc);
+    return DEVICE_OK;
+}
+
+int DynamicPwm::disable()
+{
+    tcc_disable(&_pwm.tcc);
+    return DEVICE_OK;
+}

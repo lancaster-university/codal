@@ -168,6 +168,9 @@ class DynamicPwm : public PwmOut
       * @endcode
       */
       int setPeriod(uint32_t period);
+
+      int enable();
+      int disable();
 };
 
 #endif
