@@ -1,6 +1,5 @@
 #include "DataStream.h"
 #include "DeviceComponent.h"
-#include "DeviceMessageBus.h"
 #include "DeviceFiber.h"
 #include "ErrorNo.h"
 
@@ -31,10 +30,14 @@ DataStream::DataStream(DataSource &upstream)
     this->bufferCount = 0;
     this->bufferLength = 0;
     this->preferredBufferSize = 0;
-    this->notifyEventCode = allocateNotifyEvent();
+    this->pullRequestEventCode = 0;
+    this->spaceAvailableEventCode = allocateNotifyEvent();
+    this->isBlocking = true;
+    this->writers = 0;
 
     this->downStream = NULL;
     this->upStream = &upstream;
+
 }
 
 /**
@@ -150,6 +153,26 @@ void DataStream::setPreferredBufferSize(int size)
 }
 
 /**
+ * Determines if this stream acts in a synchronous, blocking mode or asynchronous mode. In blocking mode, writes to a full buffer
+ * will result in the calling fiber being blocked until space is available. Downstream DataSinks will also attempt to process data
+ * immediately as it becomes available. In non-blocking asynchronous mode, writes to a full buffer are dropped and processing of 
+ * downstream Datasinks will be deferred.
+ */
+void DataStream::setBlocking(bool isBlocking)
+{
+    this->isBlocking = isBlocking;
+
+    // If this is the first time async mode has been used on this stream, allocate the necessary resources.
+    if (!isBlocking && this->pullRequestEventCode == 0)
+    {
+        this->pullRequestEventCode = allocateNotifyEvent();
+    
+        if(EventModel::defaultEventBus)
+            EventModel::defaultEventBus->listen(DEVICE_ID_NOTIFY, pullRequestEventCode, this, &DataStream::onDeferredPullRequest);
+    }
+}
+
+/**
  * Provide the next available ManagedBuffer to our downstream caller, if available.
  */
 ManagedBuffer DataStream::pull()
@@ -171,9 +194,45 @@ ManagedBuffer DataStream::pull()
 		bufferLength = bufferLength - out.length();
 	}
 
-    DeviceEvent(DEVICE_ID_NOTIFY, notifyEventCode);
+    DeviceEvent(DEVICE_ID_NOTIFY_ONE, spaceAvailableEventCode);
 
 	return out;
+}
+
+/**
+ * Issue a pull request to our downstream component, if one has been registered.
+ */
+void DataStream::onDeferredPullRequest(DeviceEvent)
+{
+    if (downStream != NULL)
+        downStream->pullRequest();
+}
+
+/**
+ * Determines if a buffer of the given size can be added to the buffer.
+ *
+ * @param size The number of bytes to add to the buffer.
+ * @return true if there is space for "size" bytes in the buffer. false otherwise.
+ */
+bool DataStream::canPull(int size)
+{
+    if(bufferCount + writers >= DATASTREAM_MAXIMUM_BUFFERS)
+        return false;
+
+    if(preferredBufferSize > 0 && (bufferLength + size > preferredBufferSize))
+        return false;
+
+    return true;
+}
+
+/**
+ * Determines if the DataStream can accept any more data.
+ *
+ * @return true if there if the buffer is ful, and can accept no more data at this time. False otherwise.
+ */
+bool DataStream::full()
+{
+    return !canPull();
 }
 
 /**
@@ -181,15 +240,35 @@ ManagedBuffer DataStream::pull()
  */
 int DataStream::pullRequest()
 {
-	if (bufferCount == DATASTREAM_MAXIMUM_BUFFERS || bufferLength > preferredBufferSize)
-        fiber_wait_for_event(DEVICE_ID_NOTIFY, notifyEventCode);
+    // If we're defined as non-blocking and no space is available, then there's nothing we can do.
+    if (full() && this->isBlocking == false)
+        return DEVICE_NO_RESOURCES;
 
-	stream[bufferCount] = upStream->pull();
-	bufferLength = bufferLength + stream[bufferCount].length();
+    // As there is either space available in the buffer or we want to block, pull the upstream buffer to release resources there.
+    ManagedBuffer buffer = upStream->pull();
+
+    // If the buffer is full or we're behind another fiber, then wait for space to become available.
+    if (full() || writers)
+        fiber_wake_on_event(DEVICE_ID_NOTIFY, spaceAvailableEventCode);
+
+    if (full() || writers)
+    {
+        writers++;
+        schedule();
+        writers--;
+    }
+
+	stream[bufferCount] = buffer;
+	bufferLength = bufferLength + buffer.length();
 	bufferCount++;
-	
+
 	if (downStream != NULL)
-		downStream->pullRequest();
+    {
+        if (this->isBlocking)
+            downStream->pullRequest();
+        else
+            DeviceEvent(DEVICE_ID_NOTIFY, pullRequestEventCode);
+    }
 
 	return DEVICE_OK;
 }
