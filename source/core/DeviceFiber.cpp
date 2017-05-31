@@ -129,19 +129,23 @@ static PausedGroup *find_paused_group(uint16_t group_id)
     return NULL;
 }
 
-static void queue_fiber_for_run(Fiber *f)
+static void move_fiber(Fiber *f, Fiber **queue)
 {
     dequeue_fiber(f);
-    
+    queue_fiber(f, queue);
+}
+
+static void queue_fiber_for_run(Fiber *f)
+{
     if (f->group_id != 0) {
         PausedGroup *g = find_paused_group(f->group_id);
         if (g) {
-            queue_fiber(f, &g->runQueue);
+            move_fiber(f, &g->runQueue);
             return;
         }
     }
 
-    queue_fiber(f, &runQueue);
+    move_fiber(f, &runQueue);
 }
 
 /**
@@ -196,6 +200,7 @@ Fiber *getFiberContext()
 
         f->stack_bottom = 0;
         f->stack_top = 0;
+        f->queue = NULL;
     }
 
     __enable_irq();
@@ -209,7 +214,7 @@ Fiber *getFiberContext()
     return f;
 }
 
-static void handle_fob()
+static Fiber* handle_fob()
 {
     // This is a blocking call, so if we're in a fork on block context,
     // it's time to spawn a new fiber...
@@ -222,12 +227,10 @@ static void handle_fob()
         // If we're out of memory, there's nothing we can do.
         // keep running in the context of the current thread as a best effort.
         if (forkedFiber != NULL)
-        {
-            dequeue_fiber(forkedFiber);
-            queue_fiber(forkedFiber, &runQueue);
-            schedule();
-        }
+            return forkedFiber;
     }
+
+    return currentFiber;
 }
 
 /**
@@ -307,8 +310,7 @@ void scheduler_tick(DeviceEvent evt)
         if (evt.timestamp >= f->context)
         {
             // Wakey wakey!
-            dequeue_fiber(f);
-            queue_fiber(f,&runQueue);
+            move_fiber(f, &runQueue);
         }
 
         f = t;
@@ -383,8 +385,6 @@ void scheduler_event(DeviceEvent evt)
   */
 void fiber_sleep(unsigned long t)
 {
-    Fiber *f = currentFiber;
-
     // If the scheduler is not running, then simply perform a spin wait and exit.
     if (!fiber_scheduler_running())
     {
@@ -392,28 +392,13 @@ void fiber_sleep(unsigned long t)
         return;
     }
 
-    // Sleep is a blocking call, so if we're in a fork on block context,
-    // it's time to spawn a new fiber...
-    if (currentFiber->flags & DEVICE_FIBER_FLAG_FOB)
-    {
-        // Allocate a new fiber. This will come from the fiber pool if availiable,
-        // else a new one will be allocated on the heap.
-        forkedFiber = getFiberContext();
-
-        // If we're out of memory, there's nothing we can do.
-        // keep running in the context of the current thread as a best effort.
-        if (forkedFiber != NULL)
-            f = forkedFiber;
-    }
+    Fiber *f = handle_fob();
 
     // Calculate and store the time we want to wake up.
     f->context = system_timer_current_time() + t;
 
-    // Remove fiber from the run queue
-    dequeue_fiber(f);
-
-    // Add fiber to the sleep queue. We maintain strict ordering here to reduce lookup times.
-    queue_fiber(f, &sleepQueue);
+    // Move fiber from the run queue to the sleep queue. We maintain strict ordering here to reduce lookup times.
+    move_fiber(f, &sleepQueue);
 
     // Finally, enter the scheduler.
     schedule();
@@ -471,18 +456,13 @@ int fiber_wake_on_event(uint16_t id, uint16_t value)
     if (messageBus == NULL || !fiber_scheduler_running())
         return DEVICE_NOT_SUPPORTED;
     
-    handle_fob();
-
-    Fiber *f = currentFiber;
+    Fiber *f = handle_fob();
 
     // Encode the event data in the context field. It's handy having a 32 bit core. :-)
     f->context = (uint32_t)value << 16 | id;
 
-    // Remove ourselves from the run queue
-    dequeue_fiber(f);
-
     // Add ourselves to the sleep queue. We maintain strict ordering here to reduce lookup times.
-    queue_fiber(f, &waitQueue);
+    move_fiber(f, &waitQueue);
 
     // Register to receive this event, so we can wake up the fiber when it happens.
     // Special case for the notify channel, as we always stay registered for that.
@@ -749,11 +729,8 @@ void release_fiber(void)
     if (!fiber_scheduler_running())
         return;
 
-    // Remove ourselves form the runqueue.
-    dequeue_fiber(currentFiber);
-
-    // Add ourselves to the list of free fibers
-    queue_fiber(currentFiber, &fiberPool);
+    // Move ourselves to the list of free fibers
+    move_fiber(currentFiber, &fiberPool);
 
     // Find something else to do!
     schedule();
@@ -964,17 +941,18 @@ void fiber_set_group(uint16_t group_id)
 {
     PausedGroup *g = find_paused_group(group_id);
 
+    Fiber *f = currentFiber;
+
     if (g) {
         // we're about to block; make sure we're not FOB
-        handle_fob();
+        f = handle_fob();
         // just in case - search again, in case we were unpaused in the meantime
         g = find_paused_group(group_id);
     }
 
-    currentFiber->group_id = group_id;
+    f->group_id = group_id;
     if (g) {
-        dequeue_fiber(currentFiber);
-        queue_fiber(currentFiber, &g->runQueue);
+        move_fiber(f, &g->runQueue);
         schedule(); // do not return until we're back on runQueue
     }
 }
@@ -985,8 +963,7 @@ static void move_fibers(Fiber *queue, Fiber **trgQueue, uint16_t group_id)
     for (Fiber *f = queue; f; f = n) {
         n = f->next;
         if (group_id == 0 || f->group_id == group_id) {
-            dequeue_fiber(f);
-            queue_fiber(f, trgQueue);
+            move_fiber(f, trgQueue);
         }
     }
 }
@@ -1003,8 +980,9 @@ int fiber_pause_group(uint16_t group_id)
     if (g)
         return DEVICE_NOT_SUPPORTED; // already paused
     
+    Fiber *f = currentFiber;
     if (currentFiber->group_id == group_id)
-        handle_fob();
+        f = handle_fob();
 
     g = (PausedGroup*)malloc(sizeof(PausedGroup));   
 
@@ -1018,8 +996,10 @@ int fiber_pause_group(uint16_t group_id)
     move_fibers(runQueue, &g->runQueue, group_id);
     move_fibers(sleepQueue, &g->sleepQueue, group_id);
 
-    if (currentFiber->group_id == group_id)
+    if (f->group_id == group_id) {
+        move_fiber(f, &g->runQueue);
         schedule();
+    }
     
     return DEVICE_OK;
 }
