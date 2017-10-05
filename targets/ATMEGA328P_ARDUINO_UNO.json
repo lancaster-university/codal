@@ -14,7 +14,7 @@
     "target":{
         "name":"codal-atmega328p",
         "url":"https://github.com/lancaster-university/codal-atmega328p",
-        "branch":"master",
+        "branch":"atmega328p",
         "type":"git"
     },
     "libraries":[
