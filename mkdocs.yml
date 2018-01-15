@@ -1,0 +1,18 @@
+extra_css:
+- css/extra.css
+google_analytics:
+- UA-76156484-1
+- auto
+markdown_extensions:
+- toc:
+    permalink: true
+- admonition: null
+pages:
+- Introduction: index.md
+- Installation Guide: installation.md
+- Devices: devices.md
+- Advanced: advanced.md
+repo_url: https://github.com/lancaster-university/codal/
+site_description: Information on the Component Oriented Device Abstraction Layer (CODAL), created and maintained by Lancaster University.
+site_name: CODAL
+theme_dir: theme
