@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+
+	<title>Devices - CODAL</title>
+
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link rel="stylesheet" href="../css/highlight.css">
+        <link href="../css/base.css" rel="stylesheet">
+        <link href="../css/extra.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-76156484-1', 'auto');
+            ga('send', 'pageview');
+        </script>
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-custom navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <!-- Main title -->
+            
+                <a class="navbar-brand" style="padding-top:25px; padding-bottom:25px" rel="home" href="..">CODAL</a>
+            
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            <!-- Main navigation -->
+            <ul class="nav navbar-nav">
+            
+
+            
+                <li >
+                    <a href="..">Introduction</a>
+                </li>
+            
+            
+
+            
+                <li >
+                    <a href="../installation/">Installation Guide</a>
+                </li>
+            
+            
+
+            
+                <li class="active">
+                    <a href="./">Devices</a>
+                </li>
+            
+            
+
+            
+                <li >
+                    <a href="../advanced/">Advanced</a>
+                </li>
+            
+            
+            </ul>
+
+            <!-- Search, Navigation and Repo links -->
+            <ul class="nav navbar-nav navbar-right hidden-md hidden-sm">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                <li >
+                    <a rel="next" href="../installation/">
+                        <i class="fa fa-arrow-left"></i> Previous
+                    </a>
+                </li>
+                <li >
+                    <a rel="prev" href="../advanced/">
+                        Next <i class="fa fa-arrow-right"></i>
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="https://github.com/lancaster-university/codal/">
+                        
+                            <i class="fa fa-github"></i>
+                        
+                        GitHub
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#devices">Devices</a></li>
+        
+    
+        <li class="main "><a href="#configuration">Configuration</a></li>
+        
+            <li><a href="#configuration-options">Configuration Options</a></li>
+        
+    
+        <li class="main "><a href="#targets">Targets</a></li>
+        
+            <li><a href="#arduino-uno">Arduino Uno</a></li>
+        
+            <li><a href="#brainpad">BrainPad</a></li>
+        
+            <li><a href="#circuit-playground">Circuit Playground</a></li>
+        
+    
+    </ul>
+</div></div>
+            <div class="col-md-9" role="main">
+
+<h1 id="devices">Devices<a class="headerlink" href="#devices" title="Permanent link">&para;</a></h1>
+<p>A number of devices (or targets) are currently supported in CODAL, to obtain a full list of targets type:</p>
+<pre><code>python build.py ls
+</code></pre>
+
+<p>To generate the <code>codal.json</code> for a target listed by the ls command, please run:</p>
+<pre><code>python build.py &lt;target-name&gt;
+</code></pre>
+
+<p>Please note you may need to remove the libraries folder if your previous build relied on similar dependencies.</p>
+<h1 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h1>
+<p>Below is an example of how to configure codal to build the <a href="https://github.com/lancaster-university/codal-circuit-playground">codal-circuit-playground</a> target, example applications will automatically be loaded into the "source" folder:</p>
+<pre><code class="json">{
+    &quot;target&quot;:{
+        &quot;name&quot;:&quot;codal-circuit-playground&quot;,
+        &quot;url&quot;:&quot;https://github.com/lancaster-university/codal-circuit-playground&quot;,
+        &quot;branch&quot;:&quot;master&quot;,
+        &quot;type&quot;:&quot;git&quot;
+    }
+}
+</code></pre>
+
+<p>For more targets, read the targets section below.</p>
+<h2 id="configuration-options">Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">&para;</a></h2>
+<p>If you would like to override or define any additional configuration options (<code>#define's</code>) that are used by the supporting libraries, the codal build system allows the addition of a config field in <code>codal.json</code>:</p>
+<pre><code class="json">{
+    &quot;target&quot;:{
+        &quot;name&quot;:&quot;codal-circuit-playground&quot;,
+        &quot;url&quot;:&quot;https://github.com/lancaster-university/codal-circuit-playground&quot;,
+        &quot;branch&quot;:&quot;master&quot;,
+        &quot;type&quot;:&quot;git&quot;
+    },
+    &quot;config&quot;:{
+        &quot;NUMBER_ONE&quot;:1
+    },
+    &quot;application&quot;:&quot;source&quot;,
+    &quot;output_folder&quot;:&quot;.&quot;
+}
+</code></pre>
+
+<p>The above example will translate <code>"NUMBER_ONE":1</code> into: <code>#define NUMBER_ONE     1</code> and force include it during compilation. You can also specify alternate application or output folders.</p>
+<h1 id="targets">Targets<a class="headerlink" href="#targets" title="Permanent link">&para;</a></h1>
+<h2 id="arduino-uno">Arduino Uno<a class="headerlink" href="#arduino-uno" title="Permanent link">&para;</a></h2>
+<p>This target specifies the arduino uno which is driven by an atmega328p.</p>
+<h3 id="codaljson-specification">codal.json specification<a class="headerlink" href="#codaljson-specification" title="Permanent link">&para;</a></h3>
+<pre><code class="json">{
+    &quot;target&quot;:{
+        &quot;name&quot;:&quot;codal-arduino-uno&quot;,
+        &quot;url&quot;:&quot;https://github.com/lancaster-university/codal-arduino-uno&quot;,
+        &quot;branch&quot;:&quot;master&quot;,
+        &quot;type&quot;:&quot;git&quot;
+    }
+}
+
+</code></pre>
+
+<p>This target depends on:</p>
+<ul>
+<li><a href="https://github.com/lancaster-university/codal-core">codal-core</a> provides the core CODAL abstractions</li>
+<li><a href="https://github.com/lancaster-university/codal-atmega328p">codal-atmega328p</a> implements basic CODAL components (I2C, Pin, Serial, Timer)</li>
+</ul>
+<h2 id="brainpad">BrainPad<a class="headerlink" href="#brainpad" title="Permanent link">&para;</a></h2>
+<p>This target specifies the BrainPad which is driven by a STM32F.</p>
+<h3 id="codaljson-specification_1">codal.json specification<a class="headerlink" href="#codaljson-specification_1" title="Permanent link">&para;</a></h3>
+<pre><code class="json">{
+    &quot;target&quot;:{
+        &quot;name&quot;:&quot;codal-brainpad&quot;,
+        &quot;url&quot;:&quot;https://github.com/lancaster-university/codal-brainpad&quot;,
+        &quot;branch&quot;:&quot;master&quot;,
+        &quot;type&quot;:&quot;git&quot;
+    }
+}
+</code></pre>
+
+<p>This target depends on:</p>
+<ul>
+<li><a href="https://github.com/lancaster-university/codal-core">codal-core</a> provides the core CODAL abstractions</li>
+<li><a href="https://github.com/lancaster-university/codal-mbed">codal-mbedos</a> implements required CODAL basic components (Timer, Serial, Pin, I2C, ...) using Mbed</li>
+</ul>
+<h2 id="circuit-playground">Circuit Playground<a class="headerlink" href="#circuit-playground" title="Permanent link">&para;</a></h2>
+<p>This target specifies the circuit playground which is driven by a SAMD21.</p>
+<h3 id="codaljson-specification_2">codal.json specification<a class="headerlink" href="#codaljson-specification_2" title="Permanent link">&para;</a></h3>
+<pre><code class="json">{
+    &quot;target&quot;:{
+        &quot;name&quot;:&quot;codal-circuit-playground&quot;,
+        &quot;url&quot;:&quot;https://github.com/lancaster-university/codal-circuit-playground&quot;,
+        &quot;branch&quot;:&quot;master&quot;,
+        &quot;type&quot;:&quot;git&quot;
+    }
+}
+
+</code></pre>
+
+<p>This target depends on:</p>
+<ul>
+<li><a href="https://github.com/lancaster-university/codal-core">codal-core</a> provides the core CODAL abstractions</li>
+<li><a href="https://github.com/lancaster-university/codal-mbed">codal-mbed</a> implements required CODAL basic components (Timer, Serial, Pin, I2C, ...) using Mbed</li>
+<li><a href="https://github.com/lancaster-university/codal-samd21">codal-samd21</a> implements SAMD21-specific components (such as USB)</li>
+<li><a href="https://github.com/lancaster-university/mbed-classic">mbed-classic</a> is a fork of mbed, used by codal-mbed</li>
+</ul></div>
+        </div>
+
+        <footer class="col-md-12">
+            
+            <center><a href="https://www.lancaster.ac.uk"><image style="width:auto;" height="61" src="../img/lancs-logo.png"></image></a></center>
+            <center>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</center>
+        </footer>
+
+        <script src="../js/jquery-1.10.2.min.js"></script>
+        <script src="../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../js/highlight.pack.js"></script>
+        <script>var base_url = '..';</script>
+        <script data-main="../mkdocs/js/search.js" src="../mkdocs/js/require.js"></script>
+        <script src="../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
