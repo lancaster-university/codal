@@ -93,10 +93,16 @@ if len(args) == 1:
         break
 
     if target_config == None and target_name.startswith("http"):
+        name = re.sub(r"(^.*)/([^#]*)#(.*)", r"\2", target_name)
+        url = target_name
+        branch = "master"
+        if '#' in target_name:
+            branch = re.sub(r"(^.*)/([^#]*)#(.*)", r"\3", target_name)
+            url = re.sub(r"(^.*)/([^#]*)#(.*)", r"\1/\2", target_name)
         target_config = {
-            "name": re.sub("^.*/", "", target_name),
-            "url": target_name,
-            "branch": "master",
+            "name": name,
+            "url": url,
+            "branch": branch,
             "type": "git"
         }
 
