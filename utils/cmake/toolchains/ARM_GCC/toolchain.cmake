@@ -9,7 +9,10 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "")
 
 set(CODAL_TOOLCHAIN "ARM_GCC")
 
+message("registered cmake version ${CMAKE_VERSION}")
+
 if(CMAKE_VERSION VERSION_LESS "3.5.0")
+    message("FORCE CMAKE COMPILER")
     include(CMakeForceCompiler)
     cmake_force_c_compiler("${ARM_NONE_EABI_GCC}" GNU)
     cmake_force_cxx_compiler("${ARM_NONE_EABI_GPP}" GNU)
