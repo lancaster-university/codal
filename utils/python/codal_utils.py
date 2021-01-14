@@ -93,7 +93,7 @@ def get_next_version(options):
     v2 = int(m.group(3))
     vB = -1
     branchName = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
-    if not options.branch and branchName != "master":
+    if not options.branch and not (branchName == "master" or branchName == "main"):
         print("On non-master branch use -l -b")
         exit(1)
     suff = ""
