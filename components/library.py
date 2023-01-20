@@ -24,9 +24,9 @@
 
 from genericpath import exists
 from importlib import import_module
-from log import Log
-import json_ops
-import net_tools
+from components.log import Log
+import components.json_ops as json_ops
+import components.net_tools as net_tools
 import os
 import subprocess
 
@@ -114,3 +114,9 @@ def update( name, branch="", specfile = "module.json"):
 
   Log.warn( f'WARN: Missing specification file for {name}: {specfile}' )
   return {}
+
+def list():
+  codalJson = json_ops.load( os.path.join( BASE_ROOT, "codal.json" ) )
+  if 'libraries' not in codalJson:
+    codalJson['libraries'] = []
+  return codalJson['libraries']

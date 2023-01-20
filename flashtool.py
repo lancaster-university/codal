@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 # The MIT License (MIT)
 
-# Copyright (c) 2022 Lancaster University.
+# Copyright (c) 2017 Lancaster University.
 
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -22,29 +22,20 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import os
-import sys
+from optparse import OptionParser
+from components.log import Log
 
-from importlib import import_module
-from genericpath import exists
+def run_tool( options, args ):
+    Log.error( "Unimplemented tool: flash" )
+    exit( 1 )
 
-BOOTSTRAP_TAG = "feature/bootstrap"
-TARGET_LIST = [
-    "https://raw.githubusercontent.com/lancaster-university/codal/master/utils/targets.json"
-]
-BASE_ROOT = os.getcwd()
-CODAL_ROOT = os.path.join( BASE_ROOT, 'libraries', 'codal' )
+def add_flags( parser ):
+    #parser.add_option('-c', '--clean', dest='clean', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)
+    return
 
-# Minimum folder structure:
-if not exists( os.path.join( BASE_ROOT, 'libraries' ) ):
-  os.mkdir( os.path.join( BASE_ROOT, 'libraries' ) );
-
-# Grab the latest library
-if not exists( os.path.join( BASE_ROOT, 'libraries', 'codal' ) ):
-  print( "Downloading codal-bootstrap..." )
-  if not exists( os.path.join( CODAL_ROOT, '.git' ) ):
-    os.system( f'git clone --recurse-submodules --branch "{BOOTSTRAP_TAG}" "https://github.com/lancaster-university/codal.git" "{CODAL_ROOT}"' )
-
-# Jump into the current upstream code
-sys.path.append( CODAL_ROOT )
-import_module( f'libraries.codal.codal' )
+if __name__ == "__main__":
+    parser = OptionParser(usage="TBD [options]", description="TBD")
+    add_flags( parser )
+    (options, args) = parser.parse_args()
+    run_tool( options, args )
+    exit( 0 )
