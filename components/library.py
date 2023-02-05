@@ -89,7 +89,6 @@ def clone( url, name, branch = "master", specfile = "module.json" ):
   if exists( os.path.join( git_root, specfile ) ):
     return json_ops.load( os.path.join( git_root, specfile ) )
 
-  Log.info( f'WARN: Missing specification file for {name}: {specfile}' )
   return {}
 
 def update( name, branch="", specfile = "module.json"):
@@ -111,8 +110,7 @@ def update( name, branch="", specfile = "module.json"):
 
   if exists( os.path.join( git_root, specfile ) ):
     return json_ops.load( os.path.join( git_root, specfile ) )
-
-  Log.warn( f'WARN: Missing specification file for {name}: {specfile}' )
+  
   return {}
 
 def list():

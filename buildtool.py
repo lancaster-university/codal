@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # The MIT License (MIT)
 
@@ -148,12 +148,11 @@ def run_tool( options, args ):
         system("cmake --version")
         build(True, True)
 
-def create_opt_group( parser ):
-    group = optparse.OptionGroup( parser, "BUILD Flags: codal.py build [options]", "This script manages the build system for a codal device. Passing a target-name generates a codal.json for that devices, to list all devices available specify the target-name as 'ls'." )
-    add_flags( group )
-    return group
-
-def add_flags( parser ):
+def get_opt_parser():
+    parser = optparse.OptionParser(
+        usage="BUILD: codal.py build [options]",
+        description="This script manages the build system for a codal device. Passing a target-name generates a codal.json for that devices, to list all devices available specify the target-name as 'ls'.",
+    )
     parser.add_option('-c', '--clean', dest='clean', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)
     parser.add_option('-t', '--test-platforms', dest='test_platform', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)
     parser.add_option('-l', '--lock', dest='lock_target', action="store_true", help='Create target-lock.json, updating patch version', default=False)
@@ -165,10 +164,10 @@ def add_flags( parser ):
     parser.add_option('-s', '--status', dest='status', action="store_true", help='git status target and libraries', default=False)
     parser.add_option('-d', '--dev', dest='dev', action="store_true", help='enable developer mode (does not use target-locked.json)', default=False)
     parser.add_option('-g', '--generate-docs', dest='generate_docs', action="store_true", help='generate documentation for the current target', default=False)
+    return parser
 
 if __name__ == "__main__":
-    parser = optparse.OptionParser(usage="usage: %prog target-name-or-url [options]", description="This script manages the build system for a codal device. Passing a target-name generates a codal.json for that devices, to list all devices available specify the target-name as 'ls'.")
-    add_flags( parser )
+    parser = get_opt_parser()
     (options, args) = parser.parse_args()
     run_tool( options, args )
     exit( 0 )

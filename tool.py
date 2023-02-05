@@ -28,7 +28,7 @@ import sys
 from importlib import import_module
 from genericpath import exists
 
-BOOTSTRAP_TAG = "feature/bootstrap"
+BOOTSTRAP_TAG = "feature/bootstrap-refactor"
 TARGET_LIST = [
     "https://raw.githubusercontent.com/lancaster-university/codal/master/utils/targets.json"
 ]
