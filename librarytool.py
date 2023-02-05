@@ -22,7 +22,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from optparse import OptionParser
+from optparse import OptionParser, OptionGroup
 from components.log import Log
 from components.net_tools import is_url
 import components.library as library
@@ -73,8 +73,12 @@ def run_tool( options, args ):
     
     exit( 1 )
 
+def create_opt_group( parser ):
+    group = OptionGroup( parser, "LIBRARY Flags: codal.py library [options]", "Flags and options applicable to the LIBRARY tool" )
+    add_flags( group )
+    return group
+
 def add_flags( parser ):
-    #parser.add_option('-c', '--clean', dest='clean', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)
     parser.add_option( '--all', dest='all_libraries', action='store_true', help='Attempt to apply this operation to all configured libraries (if applicable)', default=False )
 
 if __name__ == "__main__":

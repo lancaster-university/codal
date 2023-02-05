@@ -148,6 +148,11 @@ def run_tool( options, args ):
         system("cmake --version")
         build(True, True)
 
+def create_opt_group( parser ):
+    group = optparse.OptionGroup( parser, "BUILD Flags: codal.py build [options]", "This script manages the build system for a codal device. Passing a target-name generates a codal.json for that devices, to list all devices available specify the target-name as 'ls'." )
+    add_flags( group )
+    return group
+
 def add_flags( parser ):
     parser.add_option('-c', '--clean', dest='clean', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)
     parser.add_option('-t', '--test-platforms', dest='test_platform', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)

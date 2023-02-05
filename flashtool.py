@@ -22,12 +22,18 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from optparse import OptionParser
+from optparse import OptionParser, OptionGroup
 from components.log import Log
 
 def run_tool( options, args ):
     Log.error( "Unimplemented tool: flash" )
     exit( 1 )
+
+
+def create_opt_group( parser ):
+    group = OptionGroup( parser, "FLASH Flags: codal.py flash [options]", "Flags and options applicable to the FLASH tool" )
+    add_flags( group )
+    return group
 
 def add_flags( parser ):
     #parser.add_option('-c', '--clean', dest='clean', action="store_true", help='Whether to clean before building. Applicable only to unix based builds.', default=False)

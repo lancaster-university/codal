@@ -75,11 +75,30 @@ def printstatus():
 def status():
     (codal, targetdir, target) = read_config()
     dirname = os.getcwd()
+    print( "=======================" )
+    print( "   Target Libraries    " )
+    print( "=======================" )
+    os.chdir(dirname + "/libraries/" + targetdir)
+    printstatus()
+    os.chdir(dirname)
+
     for ln in target['libraries']:
         os.chdir(dirname + "/libraries/" + ln['name'])
         printstatus()
-    os.chdir(dirname + "/libraries/" + targetdir)
-    printstatus()
+    
+    if 'libraries' in codal:
+        print( "\n=======================" )
+        print( " Application Libraries " )
+        print( "=======================" )
+
+        for ln in codal['libraries']:
+            os.chdir(dirname + "/libraries/" + ln['name'])
+            printstatus()
+    
+    print( "\n=======================" )
+    print( "      Application      " )
+    print( "=======================" )
+
     os.chdir(dirname)
     printstatus()
 
