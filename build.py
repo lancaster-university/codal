@@ -65,7 +65,7 @@ if options.status:
 # out of source build!
 os.chdir("build")
 
-test_json = read_json("../utils/targets.json")
+test_json = read_json("../libraries/codal/utils/targets.json")
 
 # configure the target a user has specified:
 if len(args) == 1:
