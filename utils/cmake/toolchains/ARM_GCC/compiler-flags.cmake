@@ -42,6 +42,8 @@ set(CMAKE_CXX_FLAGS_RELEASE_INIT        "-Os -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-Os -g -gdwarf-3 -DNDEBUG")
 set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
 
+set(CMAKE_CXX_STANDARD_LIBRARIES "")
+
 if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "7.1.0" OR CMAKE_C_COMPILER_VERSION VERSION_EQUAL "7.1.0")
     message("${BoldRed}Supressing -Wexpansion-to-defined.${ColourReset}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-expansion-to-defined")
