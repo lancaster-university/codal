@@ -36,6 +36,11 @@ endif()
 set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
+# avoid error message on macOS Apple Silicon
+#   arm-none-eabi-g++: error: unrecognized command-line option '-arch'; did you mean '-march='?
+# see https://github.com/nrfconnect/sdk-nrf/pull/12340
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR "arm")
 
 #read our config file...
 file(READ "./codal.json" codal_json)
