@@ -1,0 +1,57 @@
+name: Build Test Targets
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+
+jobs:
+  build-py-script:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-13, windows-2019]
+        gcc: ['6-2016-q4', 'latest']
+        cmake: ['3.6.0', '']  # Empty string installs the latest CMake release
+        target: ['-t']  # Build all test targets
+        # Some targets don't compile in some versions of GCC, so they've been excluded
+        # from the test targets, but specific environments can be set up where they build
+        include:
+          # Affected by the issue described in this PR for a different target:
+          # https://github.com/lancaster-university/codal-core/pull/165
+          - os: ubuntu-20.04
+            gcc: '10-2020-q4'
+            cmake: '3.24.3'
+            target: 'codal-jacdac-feather'
+          # Not all arm-none-eabi-gcc versions define u_int8_t, u_int16_t, u_int32_t
+          - os: ubuntu-20.04
+            gcc: '10-2020-q4'
+            cmake: '3.24.3'
+            target: 'codal-stm32-iot-node'
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: "T ${{ matrix.target }}: ${{ matrix.os }}, gcc ${{ matrix.gcc }}, cmake ${{ matrix.cmake || 'latest'}}"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+      - name: Setup arm-none-eabi-gcc ${{ matrix.gcc }}
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: ${{ matrix.gcc }}
+      - name: Setup CMake ${{ matrix.cmake }}
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: ${{ matrix.cmake }}
+      - name: Install Ninja via PyPI
+        run: python -m pip install ninja
+      - name: Check Versions
+        run: |
+          arm-none-eabi-gcc --version
+          cmake --version
+          ninja --version
+          python --version
+      - name: Build all test platforms
+        run: python build.py ${{ matrix.target }}
