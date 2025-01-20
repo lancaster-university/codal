@@ -14,8 +14,8 @@ jobs:
         gcc: ['6-2016-q4', 'latest']
         cmake: ['3.6.0', '']  # Empty string installs the latest CMake release
         target: ['-t']  # Build all test targets
-        # Some targets don't compile in some versions of GCC, so they've been excluded
-        # from the test targets, but specific environments can be set up where they build
+        # Some targets don't compile with some dependency versions, so they're excluded from
+        # the test targets, but specific environments can be set up to build them successfully
         include:
           # Affected by the issue described in this PR for a different target:
           # https://github.com/lancaster-university/codal-core/pull/165
@@ -28,6 +28,30 @@ jobs:
             gcc: '10-2020-q4'
             cmake: '3.24.3'
             target: 'codal-stm32-iot-node'
+          # Affected by these issues:
+          # https://github.com/lancaster-university/codal-circuit-playground/issues/11
+          # https://github.com/lancaster-university/codal-circuit-playground/issues/12
+          - os: ubuntu-20.04
+            gcc: '10-2020-q4'
+            cmake: '3.24.3'
+            target: 'codal-circuit-playground'
+          # Affected by this issue reported for another target:
+          # https://github.com/lancaster-university/codal-circuit-playground/issues/11
+          - os: ubuntu-20.04
+            gcc: '10-2020-q4'
+            cmake: '3.24.3'
+            target: 'codal-makeable'
+          # Affected by this issue reported for another target:
+          # https://github.com/lancaster-university/codal-circuit-playground/issues/11
+          - os: ubuntu-20.04
+            gcc: '10-2020-q4'
+            cmake: '3.24.3'
+            target: 'codal-big-brainpad'
+          # Requires CMake 3.13 or higher
+          - os: ubuntu-20.04
+            gcc: '10-2020-q4'
+            cmake: '3.24.3'
+            target: 'codal-pi-pico'
       fail-fast: false
     runs-on: ${{ matrix.os }}
     name: "T ${{ matrix.target }}: ${{ matrix.os }}, gcc ${{ matrix.gcc }}, cmake ${{ matrix.cmake || 'latest'}}"
