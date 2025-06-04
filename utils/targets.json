@@ -111,4 +111,13 @@
         "branch":"main",
         "type":"git"
     }
+    ,
+    {
+        "name":"codal-wds",
+        "info":"This target specifies the WDS",
+        "device_url":"",
+        "url":"https://github.com/lancaster-university/codal-wds",
+        "branch":"master",
+        "type":"git"
+    }    
 ]
