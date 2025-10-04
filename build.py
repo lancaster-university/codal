@@ -23,7 +23,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import os
-import sys
+import stat
 import optparse
 import platform
 import json
@@ -138,9 +138,9 @@ if not options.test_platform:
     exit(0)
 
 for json_obj in test_json:
-
-    # some platforms aren't supported by travis, ignore them when testing.
-    if "test_ignore" in json_obj:
+    print("\n{}\nBuilding Target: {}\n{}".format("#" * 80, json_obj["name"], "#" * 80), flush=True)
+    # some platforms aren't supported in CI, ignore them when testing.
+    if "test_ignore" in json_obj and json_obj["test_ignore"] == True:
         print("ignoring: " + json_obj["name"])
         continue
 
@@ -149,7 +149,11 @@ for json_obj in test_json:
 
     # clean libs
     if os.path.exists("../libraries"):
-        shutil.rmtree('../libraries')
+        # On Windows git creates read only files inside .git folder which can fail rmtree
+        def set_writable(function, path, excinfo):
+            os.chmod(path, stat.S_IWRITE)
+            function(path)
+        shutil.rmtree("../libraries", onerror=set_writable)
 
     # configure the target and tests...
     config = {
